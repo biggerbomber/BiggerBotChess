@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake Build",
+            "type": "shell",
+            "command": "cmake -S . -B build && cmake --build build",
+            "group": "build",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "Build the project using CMake"
+        },
+        {
+            "label": "Run BiggerBotChess",
+            "type": "shell",
+            "command": "./build/BiggerBotChess",
+            "group": "test",
+            "dependsOn": [
+                "CMake Build"
+            ],
+            "detail": "Run the compiled executable"
+        }
+    ]
+}
