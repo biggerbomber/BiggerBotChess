@@ -7,6 +7,13 @@ namespace BiggerBotChess {
 
 using BitBoard = uint64_t;
 
+enum Color : uint8_t {
+    WHITE,
+    BLACK,
+    COLOR_NUM = 2
+};
+
+
 enum Square : uint8_t{
     S_A1, S_B1, S_C1, S_D1, S_E1, S_F1, S_G1, S_H1,
     S_A2, S_B2, S_C2, S_D2, S_E2, S_F2, S_G2, S_H2,
@@ -21,8 +28,6 @@ enum Square : uint8_t{
     S_LAST = S_H8,
     S_NUM = 64
 };
-
-
 
 enum Rank : uint8_t {
     RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
@@ -39,6 +44,31 @@ enum File : uint8_t {
 };
 
 
+inline Color operator~(Color c){
+    return static_cast<Color>(static_cast<int>(c) ^ 1);
+}
+inline Square& operator++(Square &s){
+    return s = static_cast<Square>(static_cast<uint8_t>(s) + 1);
+}
+inline Rank& operator++(Rank &r){
+    return r = static_cast<Rank>(static_cast<uint8_t>(r) + 1);
+}
+inline File& operator++(File &f){
+    return f = static_cast<File>(static_cast<uint8_t>(f) + 1);
+}
+
+inline Square& operator--(Square &s){
+    return s = static_cast<Square>(static_cast<uint8_t>(s) - 1);
+}
+inline Rank& operator--(Rank &r){
+    return r = static_cast<Rank>(static_cast<uint8_t>(r) - 1);
+}
+inline File& operator--(File &f){
+    return f = static_cast<File>(static_cast<uint8_t>(f) - 1);
+}
+
+
+
 class Board {
 public:
     // static things
@@ -46,47 +76,35 @@ public:
     static BitBoard S_RANK_MASKS[8];
     static BitBoard S_FILE_MASKS[8];
     static BitBoard S_SQUARE_MASKS[64];
+    constexpr static char  START_FEN [] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 
-    Board();
-    Board(const std::string& fen, const std::string& moves = "");
+    Board(  const std::string& fen = START_FEN,
+            const std::string& moves = "");
 
-    BitBoard Occupancy;
-    BitBoard WhitePieces;
-    BitBoard BlackPieces;
-    BitBoard Pawns_White;
-    BitBoard Pawns_Black;
-    BitBoard Knights_White;
-    BitBoard Knights_Black;
-    BitBoard Bishops_White;
-    BitBoard Bishops_Black;
-    BitBoard Rooks_White;
-    BitBoard Rooks_Black;
-    BitBoard Queens_White;
-    BitBoard Queens_Black;
-    BitBoard King_White;
-    BitBoard King_Black;
+    void clear();
 
 
+    BitBoard m_Occupancy = {0};
+    BitBoard m_Pieces[COLOR_NUM] = {0};
+    BitBoard m_Pawns[COLOR_NUM] = {0};
+    BitBoard m_Knights[COLOR_NUM] = {0};
+    BitBoard m_Bishops[COLOR_NUM] = {0};
+    BitBoard m_Rooks[COLOR_NUM] = {0};
+    BitBoard m_Queens[COLOR_NUM] = {0};
+    BitBoard m_Kings[COLOR_NUM] = {0};
+    Color m_ColorToMove = WHITE;
 
-
+    // Castling rights
 
 };
 
-BitBoard rank_file_to_square(Rank r, File f);
+BitBoard rank_file_to_square_bb(Rank r, File f);
+Square rank_file_to_square(Rank r, File f);
 Rank square_to_rank(Square sq);
 File square_to_file(Square sq);
 
 std::string bitboard_print(BitBoard bb);
 
-inline Rank& operator++(Rank &r){
-    return r = static_cast<Rank>(static_cast<uint8_t>(r) + 1);
-}
-inline File& operator++(File &f){
-    return f = static_cast<File>(static_cast<uint8_t>(f) + 1);
-}
-inline Square& operator++(Square &s){
-    return s = static_cast<Square>(static_cast<uint8_t>(s) + 1);
-}
 
 } // namespace BiggerBotChess
