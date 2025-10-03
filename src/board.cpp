@@ -240,6 +240,58 @@ Square str_to_square(const std::string& str){
     return rank_file_to_square(r, f);
 }
 
+std::string Board::get_board_pretty() const {
+    std::string board_str;
+
+    board_str += "   "; 
+    for(File f = FILE_A; f <= FILE_H; ++f) {
+        board_str += "| "+ std::string(1, 'a' + static_cast<char>(f)) + " ";
+    }
+    board_str += "| \n";
+    board_str += "---+---+---+---+---+---+---+---+---+\n";
+
+    for(Rank r = RANK_8; r != RANK_OVERFLOW; --r) {
+        board_str += " " + std::string(1, '1' + static_cast<char>(r)) + " ";
+        for(File f = FILE_A; f <= FILE_H; ++f) {
+            Square sq = rank_file_to_square(r, f);
+            BitBoard mask = S_SQUARE_MASKS[sq];
+            if(m_Pawns[WHITE] & mask) {
+                board_str += "| P ";
+            } else if(m_Pawns[BLACK] & mask) {
+                board_str += "| p ";
+            } else if(m_Knights[WHITE] & mask) {
+                board_str += "| N ";
+            } else if(m_Knights[BLACK] & mask) {
+                board_str += "| n ";
+            } else if(m_Bishops[WHITE] & mask) {
+                board_str += "| B ";
+            } else if(m_Bishops[BLACK] & mask) {
+                board_str += "| b ";
+            } else if(m_Rooks[WHITE] & mask) {
+                board_str += "| R ";
+            } else if(m_Rooks[BLACK] & mask) {
+                board_str += "| r ";
+            } else if(m_Queens[WHITE] & mask) {
+                board_str += "| Q ";
+            } else if(m_Queens[BLACK] & mask) {
+                board_str += "| q ";
+            } else if(m_Kings[WHITE] & mask) {
+                board_str += "| K ";
+            } else if(m_Kings[BLACK] & mask) {
+                board_str += "| k ";
+            } else {
+                board_str += "|   ";
+            }
+
+
+        }
+        board_str += "|\n";
+        board_str += "---+---+---+---+---+---+---+---+---+\n";
+    }
+
+    return board_str;
+}
+
 
 
 std::string square_to_str(Square sq) {

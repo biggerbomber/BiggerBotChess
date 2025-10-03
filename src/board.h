@@ -33,14 +33,16 @@ enum Rank : uint8_t {
     RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
     RANK_FIRST = RANK_1,
     RANK_LAST = RANK_8,
-    RANK_NUM = 8
+    RANK_NUM = 8,
+    RANK_OVERFLOW = 255
 };
 
 enum File : uint8_t {
     FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
     FILE_FIRST = FILE_A,
     FILE_LAST = FILE_H,
-    FILE_NUM = 8
+    FILE_NUM = 8,
+    FILE_OVERFLOW = 255
 };
 
 
@@ -128,6 +130,7 @@ public:
     void clear();
 
     std::string get_board_info() const;
+    std::string get_board_pretty() const;
 
 
     BitBoard m_Occupancy = {0};
