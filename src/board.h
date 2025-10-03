@@ -67,15 +67,58 @@ inline File& operator--(File &f){
     return f = static_cast<File>(static_cast<uint8_t>(f) - 1);
 }
 
+enum Castling : uint8_t {
+    WHITE_KING_SIDE  = 1 << 0,
+    WHITE_QUEEN_SIDE = 1 << 1,
+    BLACK_KING_SIDE  = 1 << 2,
+    BLACK_QUEEN_SIDE = 1 << 3,
+    CASTLE_ALL       = WHITE_KING_SIDE | WHITE_QUEEN_SIDE | BLACK_KING_SIDE | BLACK_QUEEN_SIDE,
+    CASTLE_NONE      = 0
+};
+
+inline Castling operator|(Castling a, Castling b) {
+    return static_cast<Castling>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
+}
+inline Castling& operator|=(Castling &a, Castling b) {
+    a = static_cast<Castling>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
+    return a;
+}
+inline Castling operator&(Castling a, Castling b) {
+    return static_cast<Castling>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
+}
+inline Castling& operator&=(Castling &a, Castling b) {
+    a = static_cast<Castling>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
+    return a;
+}
+
+enum Enpassant : uint8_t {
+    EP_NONE = 0,
+    EP_A2 = S_A2 << 1 + 1,
+    EP_B2 = S_B2 << 1 + 1,
+    EP_C2 = S_C2 << 1 + 1,
+    EP_D2 = S_D2 << 1 + 1,
+    EP_E2 = S_E2 << 1 + 1,
+    EP_F2 = S_F2 << 1 + 1,
+    EP_G2 = S_G2 << 1 + 1,
+    EP_H2 = S_H2 << 1 + 1,
+    EP_A7 = S_A7 << 1 + 1,
+    EP_B7 = S_B7 << 1 + 1,
+    EP_C7 = S_C7 << 1 + 1,
+    EP_D7 = S_D7 << 1 + 1,
+    EP_E7 = S_E7 << 1 + 1,
+    EP_F7 = S_F7 << 1 + 1,
+    EP_G7 = S_G7 << 1 + 1,
+    EP_H7 = S_H7 << 1 + 1   
+};
 
 
 class Board {
 public:
     // static things
     static void init();
-    static BitBoard S_RANK_MASKS[8];
-    static BitBoard S_FILE_MASKS[8];
-    static BitBoard S_SQUARE_MASKS[64];
+    static BitBoard S_RANK_MASKS[RANK_NUM];
+    static BitBoard S_FILE_MASKS[FILE_NUM];
+    static BitBoard S_SQUARE_MASKS[S_NUM];
     constexpr static char  START_FEN [] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 
@@ -83,6 +126,8 @@ public:
             const std::string& moves = "");
 
     void clear();
+
+    std::string get_board_info() const;
 
 
     BitBoard m_Occupancy = {0};
@@ -94,15 +139,24 @@ public:
     BitBoard m_Queens[COLOR_NUM] = {0};
     BitBoard m_Kings[COLOR_NUM] = {0};
     Color m_ColorToMove = WHITE;
-
+    
     // Castling rights
+    Castling m_CastlingRights = CASTLE_NONE;
 
+    Enpassant m_Enpassant = EP_NONE;
+    uint16_t m_HalfmoveClock = 0;
+    uint16_t m_FullmoveNumber = 0;
+    
+    
 };
 
 BitBoard rank_file_to_square_bb(Rank r, File f);
 Square rank_file_to_square(Rank r, File f);
 Rank square_to_rank(Square sq);
 File square_to_file(Square sq);
+
+Square str_to_square(const std::string& str);
+std::string square_to_str(Square sq);
 
 std::string bitboard_print(BitBoard bb);
 

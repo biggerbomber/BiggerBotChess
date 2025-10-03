@@ -10,10 +10,10 @@ int main() {
 
     Board::init();
 
-    std::cout << "Files Masks:" << std::endl;
-    for (File i = FILE_FIRST; i <= FILE_LAST; ++i) {
-        std::cout << "File " << static_cast<int>(i) << ":\n " << bitboard_print(Board::S_FILE_MASKS[i]) << std::endl;
-    }
+    Board board("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+    std::cout << board.get_board_info() << std::endl;
+
+
 
     return 0;
 }
