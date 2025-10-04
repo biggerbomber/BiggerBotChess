@@ -69,11 +69,23 @@ inline File& operator--(File &f){
     return f = static_cast<File>(static_cast<uint8_t>(f) - 1);
 }
 
+inline BitBoard get_mask(Square sq){
+    return (1ULL << sq);
+}
+inline BitBoard get_mask(Rank r){
+    return (0xFFULL << (r * 8));
+}
+inline BitBoard get_mask(File f){
+    return (0x0101010101010101ULL << f);
+}
+
 enum Castling : uint8_t {
     WHITE_KING_SIDE  = 1 << 0,
     WHITE_QUEEN_SIDE = 1 << 1,
     BLACK_KING_SIDE  = 1 << 2,
     BLACK_QUEEN_SIDE = 1 << 3,
+    WHITE_SIDE = WHITE_KING_SIDE | WHITE_QUEEN_SIDE,
+    BLACK_SIDE = BLACK_KING_SIDE | BLACK_QUEEN_SIDE,
     CASTLE_ALL       = WHITE_KING_SIDE | WHITE_QUEEN_SIDE | BLACK_KING_SIDE | BLACK_QUEEN_SIDE,
     CASTLE_NONE      = 0
 };
@@ -95,32 +107,58 @@ inline Castling& operator&=(Castling &a, Castling b) {
 
 enum Enpassant : uint8_t {
     EP_NONE = 0,
-    EP_A2 = S_A2 << 1 + 1,
-    EP_B2 = S_B2 << 1 + 1,
-    EP_C2 = S_C2 << 1 + 1,
-    EP_D2 = S_D2 << 1 + 1,
-    EP_E2 = S_E2 << 1 + 1,
-    EP_F2 = S_F2 << 1 + 1,
-    EP_G2 = S_G2 << 1 + 1,
-    EP_H2 = S_H2 << 1 + 1,
-    EP_A7 = S_A7 << 1 + 1,
-    EP_B7 = S_B7 << 1 + 1,
-    EP_C7 = S_C7 << 1 + 1,
-    EP_D7 = S_D7 << 1 + 1,
-    EP_E7 = S_E7 << 1 + 1,
-    EP_F7 = S_F7 << 1 + 1,
-    EP_G7 = S_G7 << 1 + 1,
-    EP_H7 = S_H7 << 1 + 1   
+    EP_A2 = S_A2,
+    EP_B2 = S_B2,
+    EP_C2 = S_C2,
+    EP_D2 = S_D2,
+    EP_E2 = S_E2,
+    EP_F2 = S_F2,
+    EP_G2 = S_G2,
+    EP_H2 = S_H2,
+    EP_A7 = S_A7,
+    EP_B7 = S_B7,
+    EP_C7 = S_C7,
+    EP_D7 = S_D7,
+    EP_E7 = S_E7,
+    EP_F7 = S_F7,
+    EP_G7 = S_G7,
+    EP_H7 = S_H7
 };
+
+/*
+Moves?
+6 bit start
+6 bit dest
+
+4 extra --> [isCapture, isCastelling, isPromotion, isEnpassant]?
+
+16bit [extra, start, dest]
+
+
+*/
+
+using Move = uint16_t;
+
+Move MOVE_CAPTURE = 1 << 15;
+Move MOVE_CASTLE  = 1 << 14;
+Move MOVE_PROMOTION = 1 << 13;
+Move MOVE_ENPASSANT_CAUSE = 1 << 12;
+
+inline Square get_start(Move m){
+    return static_cast<Square>((m & (0x3FU << 6)) >> 6);
+}
+
+inline Square get_dest(Move m){
+    return static_cast<Square>(m & 0x3FU);
+}
+
 
 
 class Board {
 public:
     // static things
     static void init();
-    static BitBoard S_RANK_MASKS[RANK_NUM];
-    static BitBoard S_FILE_MASKS[FILE_NUM];
-    static BitBoard S_SQUARE_MASKS[S_NUM];
+
     constexpr static char  START_FEN [] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 
@@ -158,10 +196,12 @@ Square rank_file_to_square(Rank r, File f);
 Rank square_to_rank(Square sq);
 File square_to_file(Square sq);
 
+
+
 Square str_to_square(const std::string& str);
 std::string square_to_str(Square sq);
 
-std::string bitboard_print(BitBoard bb);
+std::string print_bitboard(BitBoard bb);
 
 
 } // namespace BiggerBotChess

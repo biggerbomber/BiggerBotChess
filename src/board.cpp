@@ -4,28 +4,9 @@
 
 namespace BiggerBotChess {
 
-BitBoard Board::S_SQUARE_MASKS[S_NUM];
-BitBoard Board::S_RANK_MASKS[RANK_NUM];
-BitBoard Board::S_FILE_MASKS[FILE_NUM];
 
 void Board::init() {
-    // INIT SQUARE MASKS
-    for (Square sq = S_FIRST; sq <= S_LAST; ++sq) {
-        S_SQUARE_MASKS[sq] = (1ULL << sq);
-    }
-    // INIT RANK MASKS
-    for (Rank r = RANK_FIRST; r <= RANK_LAST; ++r) {
-        BitBoard rank_mask = (1ULL << 8) - 1;
-        rank_mask <<= (r * 8);
-        S_RANK_MASKS[r] = rank_mask;
-    }
-    // INIT FILE MASKS
-
-    for (File f = FILE_FIRST; f <= FILE_LAST; ++f) {
-        BitBoard file_mask = 0x101010101010101ULL;
-        file_mask <<= f;
-        S_FILE_MASKS[f] = file_mask;
-    }
+   //Init
 }
 
 BitBoard rank_file_to_square_bb(Rank r, File f) {
@@ -52,7 +33,6 @@ Board::Board(   const std::string& fen,
 
     int pos_end = fen.find(' ',0);
 
-    int s_count = S_FIRST;
     File f = FILE_A;
     Rank r = RANK_8;
     for (int i=0;i<pos_end;i++) {
@@ -177,26 +157,29 @@ void Board::clear() {
     }
     m_ColorToMove = WHITE;
     m_CastlingRights = CASTLE_NONE;
+    m_Enpassant = EP_NONE;
+    m_HalfmoveClock = 0;
+    m_FullmoveNumber = 0;
 }
 
 std::string Board::get_board_info() const{
     std::string info;
     info += "Board Info:\n";
-    info += "Occupancy:\n" + bitboard_print(m_Occupancy) + "\n";
-    info += "White Pieces:\n" + bitboard_print(m_Pieces[WHITE]) + "\n";
-    info += "Black Pieces:\n" + bitboard_print(m_Pieces[BLACK]) + "\n";
-    info += "White Pawns:\n" + bitboard_print(m_Pawns[WHITE]) + "\n";
-    info += "Black Pawns:\n" + bitboard_print(m_Pawns[BLACK]) + "\n";
-    info += "White Knights:\n" + bitboard_print(m_Knights[WHITE]) + "\n";
-    info += "Black Knights:\n" + bitboard_print(m_Knights[BLACK]) + "\n";
-    info += "White Bishops:\n" + bitboard_print(m_Bishops[WHITE]) + "\n";
-    info += "Black Bishops:\n" + bitboard_print(m_Bishops[BLACK]) + "\n";
-    info += "White Rooks:\n" + bitboard_print(m_Rooks[WHITE]) + "\n";
-    info += "Black Rooks:\n" + bitboard_print(m_Rooks[BLACK]) + "\n";
-    info += "White Queens:\n" + bitboard_print(m_Queens[WHITE]) + "\n";
-    info += "Black Queens:\n" + bitboard_print(m_Queens[BLACK]) + "\n";
-    info += "White Kings:\n" + bitboard_print(m_Kings[WHITE]) + "\n";
-    info += "Black Kings:\n" + bitboard_print(m_Kings[BLACK]) + "\n";
+    info += "Occupancy:\n" + print_bitboard(m_Occupancy) + "\n";
+    info += "White Pieces:\n" + print_bitboard(m_Pieces[WHITE]) + "\n";
+    info += "Black Pieces:\n" + print_bitboard(m_Pieces[BLACK]) + "\n";
+    info += "White Pawns:\n" + print_bitboard(m_Pawns[WHITE]) + "\n";
+    info += "Black Pawns:\n" + print_bitboard(m_Pawns[BLACK]) + "\n";
+    info += "White Knights:\n" + print_bitboard(m_Knights[WHITE]) + "\n";
+    info += "Black Knights:\n" + print_bitboard(m_Knights[BLACK]) + "\n";
+    info += "White Bishops:\n" + print_bitboard(m_Bishops[WHITE]) + "\n";
+    info += "Black Bishops:\n" + print_bitboard(m_Bishops[BLACK]) + "\n";
+    info += "White Rooks:\n" + print_bitboard(m_Rooks[WHITE]) + "\n";
+    info += "Black Rooks:\n" + print_bitboard(m_Rooks[BLACK]) + "\n";
+    info += "White Queens:\n" + print_bitboard(m_Queens[WHITE]) + "\n";
+    info += "Black Queens:\n" + print_bitboard(m_Queens[BLACK]) + "\n";
+    info += "White Kings:\n" + print_bitboard(m_Kings[WHITE]) + "\n";
+    info += "Black Kings:\n" + print_bitboard(m_Kings[BLACK]) + "\n";
 
     info += "Color to move: " + std::string((m_ColorToMove == WHITE) ? "White" : "Black") + "\n";
 
@@ -254,7 +237,7 @@ std::string Board::get_board_pretty() const {
         board_str += " " + std::string(1, '1' + static_cast<char>(r)) + " ";
         for(File f = FILE_A; f <= FILE_H; ++f) {
             Square sq = rank_file_to_square(r, f);
-            BitBoard mask = S_SQUARE_MASKS[sq];
+            BitBoard mask = get_mask(sq);
             if(m_Pawns[WHITE] & mask) {
                 board_str += "| P ";
             } else if(m_Pawns[BLACK] & mask) {
@@ -304,7 +287,7 @@ std::string square_to_str(Square sq) {
 
 
 //helper function to print a bitboard
-std::string bitboard_print(BitBoard bb) {
+std::string print_bitboard(BitBoard bb) {
     std::string result;
     for (Rank r = RANK_1; r <= RANK_8; ++r) {
         for (File f = FILE_A; f <= FILE_H; ++f) {

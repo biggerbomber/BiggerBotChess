@@ -3,9 +3,7 @@
 
 int main() {
     using namespace BiggerBotChess;
-    int a = 5;
-    int b = 10;
-    int sum = a + b;
+
     std::cout << "Hello, BiggerBotChess!" << std::endl;
 
     Board::init();
@@ -14,6 +12,7 @@ int main() {
     std::cout << board.get_board_info() << std::endl;
     std::cout << board.get_board_pretty() << std::endl;
 
+    std::cout << sizeof(Board) << std::endl;
 
 
     return 0;
