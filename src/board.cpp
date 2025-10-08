@@ -47,18 +47,18 @@ Board::Board(   const std::string& fen,
         ++f;
 
         switch (c) {
-            case 'P': m_Pawns[WHITE] |= (1ULL << sq); break;
-            case 'p': m_Pawns[BLACK] |= (1ULL << sq); break;
-            case 'N': m_Knights[WHITE] |= (1ULL << sq); break;
-            case 'n': m_Knights[BLACK] |= (1ULL << sq); break;
-            case 'B': m_Bishops[WHITE] |= (1ULL << sq); break;
-            case 'b': m_Bishops[BLACK] |= (1ULL << sq); break;
-            case 'R': m_Rooks[WHITE] |= (1ULL << sq); break;
-            case 'r': m_Rooks[BLACK] |= (1ULL << sq); break;
-            case 'Q': m_Queens[WHITE] |= (1ULL << sq); break;
-            case 'q': m_Queens[BLACK] |= (1ULL << sq); break;
-            case 'K': m_Kings[WHITE] |= (1ULL << sq); break;
-            case 'k': m_Kings[BLACK] |= (1ULL << sq); break;
+            case 'P': m_Pawns[WHITE] |= (1ULL << sq); m_Board[sq] = W_PAWN; break;
+            case 'p': m_Pawns[BLACK] |= (1ULL << sq); m_Board[sq] = B_PAWN; break;
+            case 'N': m_Knights[WHITE] |= (1ULL << sq); m_Board[sq] = W_KNIGHT; break;
+            case 'n': m_Knights[BLACK] |= (1ULL << sq); m_Board[sq] = B_KNIGHT; break;
+            case 'B': m_Bishops[WHITE] |= (1ULL << sq); m_Board[sq] = W_BISHOP; break;
+            case 'b': m_Bishops[BLACK] |= (1ULL << sq); m_Board[sq] = B_BISHOP; break;
+            case 'R': m_Rooks[WHITE] |= (1ULL << sq); m_Board[sq] = W_ROOK; break;
+            case 'r': m_Rooks[BLACK] |= (1ULL << sq); m_Board[sq] = B_ROOK; break;
+            case 'Q': m_Queens[WHITE] |= (1ULL << sq); m_Board[sq] = W_QUEEN; break;
+            case 'q': m_Queens[BLACK] |= (1ULL << sq); m_Board[sq] = B_QUEEN; break;
+            case 'K': m_Kings[WHITE] |= (1ULL << sq); m_Board[sq] = W_KING; break;
+            case 'k': m_Kings[BLACK] |= (1ULL << sq); m_Board[sq] = B_KING; break;
             default:
 
                 if (isdigit(c)) {
@@ -144,7 +144,8 @@ void Board::clear() {
 
    
     //TODO: maybe use memeset?
-    // memset(this, 0, sizeof(Board));
+    memset(this, 0, sizeof(Board));
+
     m_Occupancy = 0;
     for (int i = 0; i < COLOR_NUM; ++i) {
         m_Pieces[i] = 0;
@@ -223,7 +224,7 @@ Square str_to_square(const std::string& str){
     return rank_file_to_square(r, f);
 }
 
-std::string Board::get_board_pretty() const {
+std::string Board::get_board_pretty_bb() const {
     std::string board_str;
 
     board_str += "   "; 
@@ -274,10 +275,47 @@ std::string Board::get_board_pretty() const {
 
     return board_str;
 }
+//this funcion uses the vector m_Board to print the board
+std::string Board::get_board_pretty() const {
+    std::string board_str;
+    board_str += "   ";
+    for(File f = FILE_A; f <= FILE_H; ++f) {
+        board_str += "| "+ std::string(1, 'a' + static_cast<char>(f)) + " ";
+    }
+    board_str += "| \n";
+    board_str += "---+---+---+---+---+---+---+---+---+\n";
 
+    for(Rank r = RANK_8; r != RANK_OVERFLOW; --r) {
+        board_str += " " + std::string(1, '1' + static_cast<char>(r)) + " ";
+        for(File f = FILE_A; f <= FILE_H; ++f) {
+            Square sq = rank_file_to_square(r, f);
+            std::string piece;
+            switch(m_Board[sq]) {
+                case W_PAWN: piece = "P"; break;
+                case B_PAWN: piece = "p"; break;
+                case W_KNIGHT: piece = "N"; break;
+                case B_KNIGHT: piece = "n"; break;
+                case W_BISHOP: piece = "B"; break;
+                case B_BISHOP: piece = "b"; break;
+                case W_ROOK: piece = "R"; break;
+                case B_ROOK: piece = "r"; break;
+                case W_QUEEN: piece = "Q"; break;
+                case B_QUEEN: piece = "q"; break;
+                case W_KING: piece = "K"; break;
+                case B_KING: piece = "k"; break;
+                default: piece = " "; break;
+            }
 
+            board_str += "| " + piece + " ";
+        }
+        board_str += "|\n";
+        board_str += "---+---+---+---+---+---+---+---+---+\n";
+    }
 
+    return board_str;
+}
 std::string square_to_str(Square sq) {
+    assert(sq >= S_FIRST && sq <= S_LAST);
     File f = square_to_file(sq);
     Rank r = square_to_rank(sq);
     return std::string(1, 'a' + static_cast<char>(f)) + std::string(1, '1' + static_cast<char>(r));
