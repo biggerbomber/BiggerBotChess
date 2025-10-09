@@ -1,6 +1,7 @@
 #include <iostream>
 #include "board.h"
 #include "move.h"
+#include "movegenerator.h"
 
 int main() {
     using namespace BiggerBotChess;
@@ -16,6 +17,10 @@ int main() {
 
     std::cout << sizeof(Board) << std::endl;
 
+
+    MoveSaver m;
+
+    std::cout<<m.size()<<std::endl;
     
 
 

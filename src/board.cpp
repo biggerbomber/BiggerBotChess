@@ -208,6 +208,23 @@ std::string Board::get_board_info() const{
 }
 
 
+BitBoard Board::get_pieces(Color c, PieceType p){
+    switch (p)
+    {
+        case PAWN: return m_Pawns[c];
+        case KNIGHT: return m_Knights[c];
+        case BISHOP: return m_Bishops[c];
+        case ROOK: return m_Rooks[c];
+        case QUEEN: return m_Queens[c];
+        case KING: return m_Kings[c];
+        case ALL_PIECES: return m_Pieces[c];
+        default: return 0;
+    }
+}
+
+Piece Board::make_piece(Color c, PieceType p){
+    return static_cast<Piece>(p + (c << BLACK_PIECE_OFFSET));
+}
 
 
 Square str_to_square(const std::string& str){

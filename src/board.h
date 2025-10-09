@@ -1,6 +1,6 @@
 #pragma once
 #include "types.h"
-#include <string>
+#include "move.h"
 
 namespace BiggerBotChess {
 
@@ -17,9 +17,18 @@ public:
 
     void clear();
 
+    //General Info
     std::string get_board_info() const;
     std::string get_board_pretty_bb() const;
     std::string get_board_pretty() const;
+
+    //Piece info Bitboard
+    BitBoard get_pieces(Color c, PieceType p);
+    Color get_color() const{ return m_ColorToMove;};
+
+    Piece make_piece(Color c, PieceType p);
+
+
 
 
     Piece m_Board [S_NUM];
@@ -35,8 +44,8 @@ public:
     
     // Castling rights
     Castling m_CastlingRights = CASTLE_NONE;
-
     Enpassant m_Enpassant = EP_NONE;
+
     uint16_t m_HalfmoveClock = 0;
     uint16_t m_FullmoveNumber = 0;
 };

@@ -132,10 +132,11 @@ enum PieceType {
     BISHOP,
     ROOK,
     QUEEN,
-    KING
+    KING,
+    ALL_PIECES
 };
 
-constexpr uint8_t BLACK_PIECE_FLAG = (1<<7); 
+constexpr uint8_t BLACK_PIECE_OFFSET = 7; 
 
 enum Piece {
     NONE_PIECE,
@@ -145,7 +146,7 @@ enum Piece {
     W_ROOK,
     W_QUEEN,
     W_KING,
-    B_PAWN = PAWN + BLACK_PIECE_FLAG,
+    B_PAWN = PAWN + (1 << BLACK_PIECE_OFFSET),
     B_KNIGHT,
     B_BISHOP,
     B_ROOK,
