@@ -2,7 +2,13 @@
 
 namespace BiggerBotChess{
 
-void i_generate(Board& b, BitBoard target, MoveSaver* moves);
+void i_generate(Board&  b , BitBoard target, MoveSaver* moves){
+
+    //spam to remove errors
+    b.get_board_info();
+    target = target;
+    moves =moves;
+}
 
 
 void generate_moves(Board& b, GenMoveType g, MoveSaver* moves){
@@ -11,7 +17,7 @@ void generate_moves(Board& b, GenMoveType g, MoveSaver* moves){
     switch (g)
     {
     case CAPTURE:
-        target = b.get_pieces(~b.get_color(),ALL_PIECES);
+        target = b.get_pieces(~b.get_color(),ALL_PIECES) | get_mask(static_cast<Square>(b.m_Enpassant));
         i_generate(b,target,moves);
         break;
     case STABLE:

@@ -9,23 +9,6 @@ void Board::init() {
    //Init
 }
 
-BitBoard rank_file_to_square_bb(Rank r, File f) {
-    return (1ULL << (r * (uint8_t)8 + f));
-}
-
-Square rank_file_to_square(Rank r, File f) {
-    return static_cast<Square>(r * (uint8_t)8 + f);
-}
-
-Rank square_to_rank(Square sq) {
-    return static_cast<Rank>(((uint8_t)sq / (uint8_t)8));
-}
-
-File square_to_file(Square sq) {
-    return static_cast<File>(((uint8_t)sq % (uint8_t)8));
-}
-
-
 Board::Board(   const std::string& fen,
                 const std::string& moves) {
     assert(moves == ""); // moves not implemented yet
@@ -43,7 +26,7 @@ Board::Board(   const std::string& fen,
             f = FILE_A;
             continue;
         }
-        Square sq = rank_file_to_square(r, f);
+        Square sq = get_square(r, f);
         ++f;
 
         switch (c) {
@@ -120,9 +103,9 @@ Board::Board(   const std::string& fen,
     if(fen[pos_start]!='-'){
         std::string ep_str = fen.substr(pos_start, pos_end - pos_start);
         Square ep_sq = str_to_square(ep_str);
-        if(square_to_rank(ep_sq) == RANK_3 && m_ColorToMove == BLACK){
+        if(get_rank(ep_sq) == RANK_3 && m_ColorToMove == BLACK){
             m_Enpassant = static_cast<Enpassant>((ep_sq << 1) + 1);
-        } else if (square_to_rank(ep_sq) == RANK_6 && m_ColorToMove == WHITE){
+        } else if (get_rank(ep_sq) == RANK_6 && m_ColorToMove == WHITE){
             m_Enpassant = static_cast<Enpassant>((ep_sq << 1) + 1);
         }
     }
@@ -227,20 +210,6 @@ Piece Board::make_piece(Color c, PieceType p){
 }
 
 
-Square str_to_square(const std::string& str){
-    assert(str.length() == 2);
-    char file_char = str[0];
-    char rank_char = str[1];
-
-    assert(file_char >= 'a' && file_char <= 'h');
-    assert(rank_char >= '1' && rank_char <= '8');
-
-    File f = static_cast<File>(file_char - 'a');
-    Rank r = static_cast<Rank>(rank_char - '1');
-
-    return rank_file_to_square(r, f);
-}
-
 std::string Board::get_board_pretty_bb() const {
     std::string board_str;
 
@@ -254,7 +223,7 @@ std::string Board::get_board_pretty_bb() const {
     for(Rank r = RANK_8; r != RANK_OVERFLOW; --r) {
         board_str += " " + std::string(1, '1' + static_cast<char>(r)) + " ";
         for(File f = FILE_A; f <= FILE_H; ++f) {
-            Square sq = rank_file_to_square(r, f);
+            Square sq = get_square(r, f);
             BitBoard mask = get_mask(sq);
             if(m_Pawns[WHITE] & mask) {
                 board_str += "| P ";
@@ -305,7 +274,7 @@ std::string Board::get_board_pretty() const {
     for(Rank r = RANK_8; r != RANK_OVERFLOW; --r) {
         board_str += " " + std::string(1, '1' + static_cast<char>(r)) + " ";
         for(File f = FILE_A; f <= FILE_H; ++f) {
-            Square sq = rank_file_to_square(r, f);
+            Square sq = get_square(r, f);
             std::string piece;
             switch(m_Board[sq]) {
                 case W_PAWN: piece = "P"; break;
@@ -331,33 +300,5 @@ std::string Board::get_board_pretty() const {
 
     return board_str;
 }
-std::string square_to_str(Square sq) {
-    assert(sq >= S_FIRST && sq <= S_LAST);
-    File f = square_to_file(sq);
-    Rank r = square_to_rank(sq);
-    return std::string(1, 'a' + static_cast<char>(f)) + std::string(1, '1' + static_cast<char>(r));
-}
-
-
-
-
-//helper function to print a bitboard
-std::string print_bitboard(BitBoard bb) {
-    std::string result;
-    for (Rank r = RANK_1; r <= RANK_8; ++r) {
-        for (File f = FILE_A; f <= FILE_H; ++f) {
-            Square sq = rank_file_to_square(r, f);
-            result += (bb & (1ULL << sq)) ? square_to_str(sq) : " 0";
-            result += ' ';
-        }
-        result += '\n';
-    }
-    return result;
-}
-
-
-
-
-
 
 } // namespace BiggerBotChess

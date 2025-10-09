@@ -18,9 +18,13 @@ int main() {
     std::cout << sizeof(Board) << std::endl;
 
 
-    MoveSaver m;
-
-    std::cout<<m.size()<<std::endl;
+    BitBoard b = 0;
+    BitBoard mask = get_mask(S_A1) | get_mask(S_A2) | get_mask(S_A3);
+    do
+        {
+            b = (b - mask) & mask;
+            std::cout << print_bitboard(b)<< std::endl;
+        } while (b);
     
 
 

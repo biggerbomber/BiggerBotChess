@@ -1,11 +1,10 @@
 #pragma once
 #include <cstdint>
+#include <cassert>
 #include <string>
 
 namespace BiggerBotChess {
 
-
-using BitBoard = uint64_t;
 
 enum Color : uint8_t {
     WHITE,
@@ -69,15 +68,40 @@ inline File& operator--(File &f){
     return f = static_cast<File>(static_cast<uint8_t>(f) - 1);
 }
 
-inline BitBoard get_mask(Square sq){
-    return (1ULL << sq);
+
+inline Square get_square(Rank r, File f) {
+    return static_cast<Square>(r * (uint8_t)8 + f);
 }
-inline BitBoard get_mask(Rank r){
-    return (0xFFULL << (r * 8));
+
+inline Rank get_rank(Square sq) {
+    return static_cast<Rank>(((uint8_t)sq / (uint8_t)8));
 }
-inline BitBoard get_mask(File f){
-    return (0x0101010101010101ULL << f);
+
+inline File get_file(Square sq) {
+    return static_cast<File>(((uint8_t)sq % (uint8_t)8));
 }
+
+inline Square str_to_square(const std::string& str){
+    assert(str.length() == 2);
+    char file_char = str[0];
+    char rank_char = str[1];
+
+    assert(file_char >= 'a' && file_char <= 'h');
+    assert(rank_char >= '1' && rank_char <= '8');
+
+    File f = static_cast<File>(file_char - 'a');
+    Rank r = static_cast<Rank>(rank_char - '1');
+
+    return get_square(r, f);
+}
+
+inline std::string square_to_str(Square sq) {
+    assert(sq >= S_FIRST && sq <= S_LAST);
+    File f = get_file(sq);
+    Rank r = get_rank(sq);
+    return std::string(1, 'a' + static_cast<char>(f)) + std::string(1, '1' + static_cast<char>(r));
+}
+
 
 enum Castling : uint8_t {
     WHITE_KING_SIDE  = 1 << 0,

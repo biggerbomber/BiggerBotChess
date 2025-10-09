@@ -1,6 +1,7 @@
 #pragma once
 #include "types.h"
 #include "move.h"
+#include "bitboard.h"
 
 namespace BiggerBotChess {
 
@@ -49,18 +50,5 @@ public:
     uint16_t m_HalfmoveClock = 0;
     uint16_t m_FullmoveNumber = 0;
 };
-
-BitBoard rank_file_to_square_bb(Rank r, File f);
-Square rank_file_to_square(Rank r, File f);
-Rank square_to_rank(Square sq);
-File square_to_file(Square sq);
-
-
-
-Square str_to_square(const std::string& str);
-std::string square_to_str(Square sq);
-
-std::string print_bitboard(BitBoard bb);
-
 
 } // namespace BiggerBotChess
