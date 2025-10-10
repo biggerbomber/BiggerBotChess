@@ -10,7 +10,7 @@ int main() {
 
     Board::init();
 
-    Board board("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+    Board board("r3k2r/p1pp1pb1/bn2Qnp1/2qPN3/1p2P3/2N5/PPPBBPPP/R3K2R b KQkq - 3 2");
     std::cout << board.get_board_info() << std::endl;
     std::cout << board.get_board_pretty_bb() << std::endl;
     std::cout << board.get_board_pretty() << std::endl;
@@ -69,6 +69,35 @@ int main() {
     std::cout << "Queen e2 attacks:\n" << print_bitboard(BB::get_attacks(S_C4,BISHOP,occupancy) & ( board.get_pieces(BLACK,ALL_PIECES) | ~occupancy)) << "\n";
     //rook a1
     std::cout << "Rook a1 attacks:\n" << print_bitboard(BB::get_attacks(S_A1,ROOK,occupancy) & ( board.get_pieces(BLACK,ALL_PIECES) | ~occupancy)) << "\n";
+
+
+
+    //test is_square_attacked in board, print a borad with all attacked squares marked with X
+    
+    std::string board_str;
+    board_str += "   ";
+    for(File f = FILE_A; f <= FILE_H; ++f) {
+        board_str += "| "+ std::string(1, 'a' + static_cast<char>(f)) + " ";
+    }
+    board_str += "| \n";
+    board_str += "---+---+---+---+---+---+---+---+---+\n";      
+    for(Rank r = RANK_8; r != RANK_OVERFLOW; --r) {
+        board_str += " " + std::string(1, '1' + static_cast<char>(r)) + " ";
+        for(File f = FILE_A; f <= FILE_H; ++f) {
+            Square sq = get_square(r, f);
+            if(board.is_square_attacked(sq, WHITE)) {
+                board_str += "| X ";
+            } else {
+                board_str += "|   ";
+            }
+        }
+        board_str += "|\n";
+        board_str += "---+---+---+---+---+---+---+---+---+\n";
+    }
+    std::cout << "Squares attacked by BLACK:\n" << board_str << "\n";
+    
+
+
 
 
 

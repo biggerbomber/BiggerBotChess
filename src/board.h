@@ -24,11 +24,14 @@ public:
     std::string get_board_pretty() const;
 
     //Piece info Bitboard
-    BitBoard get_pieces(Color c, PieceType p);
+    BitBoard get_pieces() { return m_Occupancy;};
+    BitBoard get_pieces(Color c, PieceType p = ALL_PIECES);
     Color get_color() const{ return m_ColorToMove;};
 
     Piece make_piece(Color c, PieceType p);
 
+
+    bool is_square_attacked(Square s, Color by);
 
 
 

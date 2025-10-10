@@ -1,28 +1,48 @@
 #include "movegenerator.h"
+#include "bitboard.h"
 
 namespace BiggerBotChess{
 
-void i_generate(Board&  b , BitBoard target, MoveSaver* moves){
+void gen_moves_pawns(Board& b,GenMoveType type, BitBoard target, MoveSaver* moves){
+    b.clear();
+    type = type; target = target; moves = moves;
+};
+void gen_moves_general(Board& b, PieceType type, BitBoard target, MoveSaver* moves){
+    b.clear();
+    type = type; target = target; moves = moves;
+}
 
-    //spam to remove errors
-    b.get_board_info();
-    target = target;
-    moves =moves;
+void i_generate(Board& b , GenMoveType genType, MoveSaver* moves){
+    
+    BitBoard target = (genType == CAPTURE) ? b.get_pieces(~b.get_color())
+                    : (genType == STABLE)  ? ~b.get_pieces() 
+                    : ~b.get_pieces(b.get_color());
+
+    gen_moves_pawns(b,genType,target,moves);
+    gen_moves_general(b,KNIGHT,target,moves);
+    gen_moves_general(b,BISHOP,target,moves);
+    gen_moves_general(b,ROOK,target,moves);
+    gen_moves_general(b,QUEEN,target,moves);
+    gen_moves_general(b,KING,target,moves);
+
+
+    //Castling
+    if(genType != CAPTURE || b.m_CastlingRights & (b.get_color() == WHITE ? WHITE_SIDE : BLACK_SIDE)){
+        
+
+
+    }
+   
 }
 
 
 void generate_moves(Board& b, GenMoveType g, MoveSaver* moves){
     assert(g != LEGAL);
-    BitBoard target = 0;
     switch (g)
     {
-    case CAPTURE:
-        target = b.get_pieces(~b.get_color(),ALL_PIECES) | get_mask(static_cast<Square>(b.m_Enpassant));
-        i_generate(b,target,moves);
-        break;
+    case CAPTURE:   
     case STABLE:
-        target = ~b.get_pieces(~b.get_color(),ALL_PIECES);
-        i_generate(b,target,moves);
+        i_generate(b,g,moves);
         break;
     case ALL:
         generate_moves(b,CAPTURE,moves);

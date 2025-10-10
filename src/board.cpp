@@ -209,6 +209,34 @@ Piece Board::make_piece(Color c, PieceType p){
     return static_cast<Piece>(p + (c << BLACK_PIECE_OFFSET));
 }
 
+bool Board::is_square_attacked(Square s, Color by) {
+    BitBoard attackers = 0;
+    BitBoard occ = m_Occupancy;
+
+    // Pawns
+    attackers |= BB::get_pawn_attacks(s, ~by) & m_Pawns[by];
+    if (attackers) return true;
+
+    // Knights
+    attackers |= BB::get_attacks(s, KNIGHT, occ) & m_Knights[by];
+    if (attackers) return true;
+
+    // Bishops and Queens (diagonal attacks)
+    attackers |= BB::get_attacks(s, BISHOP, occ) & (m_Bishops[by] | m_Queens[by]);
+    if (attackers) return true;
+
+    // Rooks and Queens (straight attacks)
+    attackers |= BB::get_attacks(s, ROOK, occ) & (m_Rooks[by] | m_Queens[by]);
+    if (attackers) return true;
+
+    // Kings
+    attackers |= BB::get_attacks(s, KING, occ) & m_Kings[by];
+    if (attackers) return true;
+
+    return false;
+
+}
+
 
 std::string Board::get_board_pretty_bb() const {
     std::string board_str;
