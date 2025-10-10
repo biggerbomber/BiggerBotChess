@@ -157,7 +157,8 @@ enum PieceType {
     ROOK,
     QUEEN,
     KING,
-    ALL_PIECES
+    ALL_PIECES,
+    PIECE_NUM = ALL_PIECES
 };
 
 constexpr uint8_t BLACK_PIECE_OFFSET = 7; 

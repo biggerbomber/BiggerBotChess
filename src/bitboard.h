@@ -20,7 +20,112 @@ inline BitBoard get_square_bb(Rank r, File f) {
     return (1ULL << (r * (uint8_t)8 + f));
 }
 
+enum Direction{
+    NORTH = 8,
+    EAST = -1,
+    SOUTH = -8,
+    WEST = 1,
+    NORTH_EAST = NORTH + EAST,
+    NORTH_WEST = NORTH + WEST,
+    SOUTH_EAST = SOUTH + EAST,
+    SOUTH_WEST = SOUTH + WEST
+};
+
+inline Square& operator+=(Square& sq, Direction d){
+    return sq = static_cast<Square>(static_cast<uint8_t>(sq) + d);
+}
+
+inline BitBoard shift_bb(BitBoard b , Direction d){
+    switch (d)
+    {
+    case NORTH:
+        return b << 8;
+    case EAST:
+        return (b & ~get_mask(FILE_A)) >> 1;
+    case SOUTH:
+        return b >> 8;
+    case WEST:
+        return (b & ~get_mask(FILE_H)) << 1;
+    case NORTH_EAST:
+        return shift_bb(shift_bb(b,NORTH),EAST);
+    case NORTH_WEST:
+        return shift_bb(shift_bb(b,NORTH),WEST);
+    case SOUTH_EAST:
+        return shift_bb(shift_bb(b,SOUTH),EAST);
+    case SOUTH_WEST:
+        return shift_bb(shift_bb(b,SOUTH),WEST);
+    }
+
+}
+
+inline Square lsb(BitBoard& b){
+    assert(b != 0);
+    return static_cast<Square>(__builtin_ctzll(b));
+}
+
+inline BitBoard pop_lsb(BitBoard& b){
+    Square s = lsb(b);
+    b &= ~get_mask(s);
+    return get_mask(s);
+}
+
+BitBoard move_safe(Square s, int step);
+
+struct Magic
+{
+    BitBoard mask;
+    BitBoard magic;
+    int shift;
+    BitBoard * attacks;
+
+    int get_index(BitBoard occupancy) const {
+        return (int)(((occupancy & mask) * magic) >> (64 - shift));
+    }
+
+    BitBoard get_attacks(BitBoard occupancy) const{
+        return attacks[get_index(occupancy)];
+    }
+};
+
+
+
+
+class BB{
+    public:
+
+    static void init();
+    static void init_magics(PieceType p);
+
+    static BitBoard get_attacks(Square s, PieceType p, BitBoard occupancy = 0);
+
+    static BitBoard get_sliding_attacks(Square s, PieceType p, BitBoard occupancy = 0);
+    static BitBoard get_pawn_attacks(Square s, Color c);
+
+
+
+
+    static bool s_IsInit;
+    static BitBoard s_PlainAttacks[PIECE_NUM][S_NUM];
+    static BitBoard s_PawnAttacks[COLOR_NUM][64];
+
+    static BitBoard s_BishopAttacks[S_NUM][512];
+    static BitBoard s_RookAttacks[S_NUM][4096];
+
+    static Magic s_Magics[S_NUM][2]; //0 bishop, 1 rook
+
+    
+
+};
+
+
+
+
 std::string print_bitboard(BitBoard bb);
+
+
+
+
+
 
 
 } // namespace BiggerBotChess
