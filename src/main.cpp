@@ -10,7 +10,7 @@ int main() {
 
     Board::init();
 
-    Board board("r3k2r/p1pp1pb1/bn2Qnp1/2qPN3/1p2P3/2N5/PPPBBPPP/R3K2R b KQkq - 3 2");
+    Board board("r3k2r/p1p1ppb1/bn2Qnp1/2qPN3/1p2P3/2N5/PPPBBPPP/R3K2R b KQkq - 3 2");
     std::cout << board.get_board_info() << std::endl;
     std::cout << board.get_board_pretty_bb() << std::endl;
     std::cout << board.get_board_pretty() << std::endl;
@@ -98,8 +98,21 @@ int main() {
     
 
 
+    //test castling
+    //board = Board("r3k2r/PPppp1PP/8/8/8/8/pppPPPpp/R3K2R w KQkq - 0 1");
+    std::cout << board.get_board_pretty_bb() << std::endl;
+    std::cout << "White can castle king side: " << board.is_castle_possible(WHITE, KING_SIDE) << "\n";
+    std::cout << "White can castle queen side: " << board.is_castle_possible(WHITE, QUEEN_SIDE) << "\n";
+    std::cout << "Black can castle king side: " << board.is_castle_possible(BLACK, KING_SIDE) << "\n";
+    std::cout << "Black can castle queen side: " << board.is_castle_possible(BLACK, QUEEN_SIDE) << "\n";
 
 
+    MoveSaver moves(board, CAPTURE);
+
+    std::cout << "# of moves: " << moves.size() << "\n"; 
+    for(const Move& m : moves){
+        std::cout << m.to_str() << "\n";
+    }
 
     return 0;
 }

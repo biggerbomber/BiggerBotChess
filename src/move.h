@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <string>
 /*
 Moves?
 6 bit start
@@ -28,23 +29,40 @@ constexpr uint8_t PIECE_CONV_OFSET = 2;
 class Move {
 public:
 
-    inline Square get_start(){
+    inline Square get_start() const{
         return static_cast<Square>((m_data & (0x3FU << 6)) >> 6);
     };
 
-    inline Square get_dest(){
+    inline Square get_dest() const{
         return static_cast<Square>(m_data & 0x3FU);
     };
 
-    inline MoveType get_type(){
+    inline MoveType get_type() const{
         return static_cast<MoveType>(m_data >> 14);
     };
 
-    inline PieceType get_promotion_piece(){
+    inline PieceType get_promotion_piece() const{
         if(get_type() !=  PROMOTION){
             return NONE;
         }
         return static_cast<PieceType>(((m_data >> 12) & 0x3)+PIECE_CONV_OFSET);
+    };
+
+    inline std::string to_str() const{
+        std::string move_str = square_to_str(get_start()) + "->" + square_to_str(get_dest());
+        if(get_type() == PROMOTION){
+            switch (get_promotion_piece())
+            {
+                case KNIGHT: move_str += 'n'; break;
+                case BISHOP: move_str += 'b'; break;
+                case ROOK:   move_str += 'r'; break;
+                case QUEEN:  move_str += 'q'; break;
+                default: break;
+            }
+        }else if(get_type() == CASTLE){
+            move_str += " (castle)";
+        }
+        return move_str;
     };
 
     Move(){

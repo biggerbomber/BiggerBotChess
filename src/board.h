@@ -26,12 +26,18 @@ public:
     //Piece info Bitboard
     BitBoard get_pieces() { return m_Occupancy;};
     BitBoard get_pieces(Color c, PieceType p = ALL_PIECES);
+    Piece get_piece_on(Square s) const { return m_Board[s];};
     Color get_color() const{ return m_ColorToMove;};
+
 
     Piece make_piece(Color c, PieceType p);
 
 
-    bool is_square_attacked(Square s, Color by);
+    bool is_square_attacked(Square s, Color by) const;
+
+
+    //this checks if the 2 squares are free and not attacked
+    bool is_castle_possible(Color c, Castling side) const;
 
 
 

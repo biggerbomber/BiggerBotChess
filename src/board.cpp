@@ -209,7 +209,7 @@ Piece Board::make_piece(Color c, PieceType p){
     return static_cast<Piece>(p + (c << BLACK_PIECE_OFFSET));
 }
 
-bool Board::is_square_attacked(Square s, Color by) {
+bool Board::is_square_attacked(Square s, Color by) const {
     BitBoard attackers = 0;
     BitBoard occ = m_Occupancy;
 
@@ -289,6 +289,52 @@ std::string Board::get_board_pretty_bb() const {
 
     return board_str;
 }
+
+
+bool Board::is_castle_possible(Color c, Castling side) const{
+
+    assert(side == KING_SIDE || side == QUEEN_SIDE);
+
+    side = static_cast<Castling>(side << (c * 2)); // shift side to the correct color
+
+    switch (side)
+    {
+        case WHITE_KING_SIDE:
+            if(!(m_CastlingRights & WHITE_KING_SIDE)) return false; // no castling rights
+            if(get_piece_on(S_E1) != W_KING || get_piece_on(S_H1) != W_ROOK) return false; // king or rook not in place
+            if(m_Occupancy & (get_mask(S_F1) | get_mask(S_G1))) return false; // squares not empty
+            if(is_square_attacked(S_E1, BLACK) || is_square_attacked(S_F1, BLACK) || is_square_attacked(S_G1, BLACK)) return false; // squares attacked
+            
+            return true;
+        case WHITE_QUEEN_SIDE:
+            if(!(m_CastlingRights & WHITE_QUEEN_SIDE)) return false; // no castling rights
+            if(get_piece_on(S_E1) != W_KING || get_piece_on(S_A1) != W_ROOK) return false; // king or rook not in place
+            if(m_Occupancy & (get_mask(S_B1) | get_mask(S_C1) | get_mask(S_D1))) return false; // squares not empty
+            if(is_square_attacked(S_E1, BLACK) || is_square_attacked(S_D1, BLACK) || is_square_attacked(S_C1, BLACK)) return false; // squares attacked
+            return true;
+        case BLACK_KING_SIDE:
+            if(!(m_CastlingRights & BLACK_KING_SIDE)) return false; // no castling rights
+            if(get_piece_on(S_E8) != B_KING || get_piece_on(S_H8) != B_ROOK) return false; // king or rook not in place
+            if(m_Occupancy & (get_mask(S_F8) | get_mask(S_G8))) return false; // squares not empty
+            if(is_square_attacked(S_E8, WHITE) || is_square_attacked(S_F8, WHITE) || is_square_attacked(S_G8, WHITE)) return false; // squares attacked
+            return true;
+        case BLACK_QUEEN_SIDE:
+            if(!(m_CastlingRights & BLACK_QUEEN_SIDE)) return false; // no castling rights
+            if(get_piece_on(S_E8) != B_KING || get_piece_on(S_A8) != B_ROOK) return false; // king or rook not in place
+            if(m_Occupancy & (get_mask(S_B8) | get_mask(S_C8) | get_mask(S_D8))) return false; // squares not empty
+            if(is_square_attacked(S_E8, WHITE) || is_square_attacked(S_D8, WHITE) || is_square_attacked(S_C8, WHITE)) return false; // squares attacked
+            return true;
+    
+    default:
+        assert(false && "Invalid castling side");
+        break;
+    }
+
+}
+
+
+
+
 //this funcion uses the vector m_Board to print the board
 std::string Board::get_board_pretty() const {
     std::string board_str;

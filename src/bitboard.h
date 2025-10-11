@@ -20,7 +20,7 @@ inline BitBoard get_square_bb(Rank r, File f) {
     return (1ULL << (r * (uint8_t)8 + f));
 }
 
-enum Direction{
+enum Direction: int{
     NORTH = 8,
     EAST = -1,
     SOUTH = -8,
@@ -30,10 +30,21 @@ enum Direction{
     SOUTH_EAST = SOUTH + EAST,
     SOUTH_WEST = SOUTH + WEST
 };
+inline Direction operator+(Direction s, Direction d){
+    return static_cast<Direction>(static_cast<int>(s) + d);
+}
 
 inline Square& operator+=(Square& sq, Direction d){
     return sq = static_cast<Square>(static_cast<uint8_t>(sq) + d);
 }
+
+inline Square operator+(Square sq, Direction d){
+    return static_cast<Square>(static_cast<uint8_t>(sq) + d);
+}
+inline Square operator-(Square sq, Direction d){
+    return static_cast<Square>(static_cast<uint8_t>(sq) - d);
+}
+
 
 inline BitBoard shift_bb(BitBoard b , Direction d){
     switch (d)
@@ -55,7 +66,8 @@ inline BitBoard shift_bb(BitBoard b , Direction d){
     case SOUTH_WEST:
         return shift_bb(shift_bb(b,SOUTH),WEST);
     }
-
+    assert(false);
+    return 0;
 }
 
 inline Square lsb(BitBoard& b){
@@ -63,10 +75,10 @@ inline Square lsb(BitBoard& b){
     return static_cast<Square>(__builtin_ctzll(b));
 }
 
-inline BitBoard pop_lsb(BitBoard& b){
+inline Square pop_lsb(BitBoard& b){
     Square s = lsb(b);
     b &= ~get_mask(s);
-    return get_mask(s);
+    return s;
 }
 
 BitBoard move_safe(Square s, int step);
