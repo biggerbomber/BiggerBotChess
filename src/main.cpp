@@ -2,117 +2,99 @@
 #include "board.h"
 #include "move.h"
 #include "movegenerator.h"
+#include <algorithm>
+using namespace BiggerBotChess;
+
+int perft(Board& board, int depth) {
+    if (depth == 0) return 1;
+
+    MoveSaver moves(board, LEGAL);
+    if (moves.is_empty()) return 0;   
+
+    int nodes = 0;
+    for (const Move& move : moves) {
+        board.do_move(move,true);
+
+        int now = perft(board, depth - 1);
+        nodes += now;
+       
+        board.undo_move();
+    }
+    return nodes;
+}
+
 
 int main() {
-    using namespace BiggerBotChess;
+    
 
     std::cout << "Hello, BiggerBotChess!" << std::endl;
 
     Board::init();
-
-    Board board("r3k2r/p1p1ppb1/bn2Qnp1/2qPN3/1p2P3/2N5/PPPBBPPP/R3K2R b KQkq - 3 2");
-    std::cout << board.get_board_info() << std::endl;
-    std::cout << board.get_board_pretty_bb() << std::endl;
-    std::cout << board.get_board_pretty() << std::endl;
-
-    std::cout << sizeof(Board) << std::endl;
-
-        /*/
-    BitBoard b = 0;
-    BitBoard mask = get_mask(S_A1) | get_mask(S_A2) | get_mask(S_A3);
-    do
-        {
-            b = (b - mask) & mask;
-            std::cout << print_bitboard(b)<< std::endl;
-        } while (b);
-    
-    */
-
-
     BB::init();
+
+    //Perft test
     
-    //testing
-
-    for(Square sq = S_FIRST; sq <= S_LAST; ++sq){
-       //compare plain attacks with magic attacks and print errors
-        //BISHOP
-        BitBoard plain = BB::s_PlainAttacks[BISHOP][sq];
-        BitBoard magic = BB::get_attacks(sq, BISHOP);
-        if(plain != magic){
-            std::cout << "Error in BISHOP attacks on square " << square_to_str(sq) << "\n";
-            std::cout << "Plain:\n" << print_bitboard(plain) << "\n";
-            std::cout << "Magic:\n" << print_bitboard(magic) << "\n";
-        }
-        //ROOK
-        plain = BB::s_PlainAttacks[ROOK][sq];
-        magic = BB::get_attacks(sq, ROOK);
-        if(plain != magic){
-            std::cout << "Error in ROOK attacks on square " << square_to_str(sq) << "\n";
-            std::cout << "Plain:\n" << print_bitboard(plain) << "\n";
-            std::cout << "Magic:\n" << print_bitboard(magic) << "\n";
-        }
-        //QUEEN
-        plain = BB::s_PlainAttacks[QUEEN][sq];
-        magic = BB::get_attacks(sq, QUEEN);
-        if(plain != magic){
-            std::cout << "Error in QUEEN attacks on square " << square_to_str(sq) << "\n";
-           // std::cout << "Plain:\n" << print_bitboard(plain) << "\n";
-            //std::cout << "Magic:\n" << print_bitboard(magic) << "\n";
-        }
-
-    }
-
-    BitBoard occupancy = board.get_pieces(WHITE,ALL_PIECES) | board.get_pieces(BLACK,ALL_PIECES);
-
-    std::cout << "Occupancy:\n" << print_bitboard(occupancy) << "\n";
-    //queen e2
-    std::cout << "Queen e2 attacks:\n" << print_bitboard(BB::get_attacks(S_C4,BISHOP,occupancy) & ( board.get_pieces(BLACK,ALL_PIECES) | ~occupancy)) << "\n";
-    //rook a1
-    std::cout << "Rook a1 attacks:\n" << print_bitboard(BB::get_attacks(S_A1,ROOK,occupancy) & ( board.get_pieces(BLACK,ALL_PIECES) | ~occupancy)) << "\n";
-
-
-
-    //test is_square_attacked in board, print a borad with all attacked squares marked with X
     
-    std::string board_str;
-    board_str += "   ";
-    for(File f = FILE_A; f <= FILE_H; ++f) {
-        board_str += "| "+ std::string(1, 'a' + static_cast<char>(f)) + " ";
-    }
-    board_str += "| \n";
-    board_str += "---+---+---+---+---+---+---+---+---+\n";      
-    for(Rank r = RANK_8; r != RANK_OVERFLOW; --r) {
-        board_str += " " + std::string(1, '1' + static_cast<char>(r)) + " ";
-        for(File f = FILE_A; f <= FILE_H; ++f) {
-            Square sq = get_square(r, f);
-            if(board.is_square_attacked(sq, WHITE)) {
-                board_str += "| X ";
-            } else {
-                board_str += "|   ";
-            }
-        }
-        board_str += "|\n";
-        board_str += "---+---+---+---+---+---+---+---+---+\n";
-    }
-    std::cout << "Squares attacked by BLACK:\n" << board_str << "\n";
+    /*
     
+    std::string save_info = board.get_board_info();
+    std::string save_pretty =  board.get_board_pretty();
+    std::string save_pretty_bb =  board.get_board_pretty_bb();
 
-
-    //test castling
-    //board = Board("r3k2r/PPppp1PP/8/8/8/8/pppPPPpp/R3K2R w KQkq - 0 1");
-    std::cout << board.get_board_pretty_bb() << std::endl;
-    std::cout << "White can castle king side: " << board.is_castle_possible(WHITE, KING_SIDE) << "\n";
-    std::cout << "White can castle queen side: " << board.is_castle_possible(WHITE, QUEEN_SIDE) << "\n";
-    std::cout << "Black can castle king side: " << board.is_castle_possible(BLACK, KING_SIDE) << "\n";
-    std::cout << "Black can castle queen side: " << board.is_castle_possible(BLACK, QUEEN_SIDE) << "\n";
-
-
-    MoveSaver moves(board, CAPTURE);
-
-    std::cout << "# of moves: " << moves.size() << "\n"; 
+    MoveSaver moves(board, LEGAL);
     for(const Move& m : moves){
-        std::cout << m.to_str() << "\n";
-    }
+        board.do_move(m);
+        MoveSaver moves2(board, LEGAL);
+        std::string now_info = board.get_board_info();
+        std::string now_pretty =  board.get_board_pretty();
+        std::string now_pretty_bb =  board.get_board_pretty_bb();
+        for(const Move& m2 : moves2){
+            //std::cout << "len moves : " << board.m_MoveList.size() << std::endl;
+            
+            //std::cout << board.get_board_pretty() << "\n";
+            board.do_move(m2);
+            MoveSaver moves3(board, LEGAL);
+            for(const Move& m3 : moves3){
+                //std::cout << "Doing move: " << m.to_str() << " && "<< m2.to_str() << " && "<<m3.to_str() << "\n";
+                board.do_move(m3);
+                board.undo_move();
+                board.undo_move();
+                board.undo_move();
+                now_info = board.get_board_info();
+                now_pretty =  board.get_board_pretty();
+                now_pretty_bb =  board.get_board_pretty_bb();
+            
+                if(now_info != save_info || now_pretty != save_pretty || now_pretty_bb != save_pretty_bb){
+                    std::cout << "Error after move " << m.to_str() << " && "<< m2.to_str()<< "&&"<<m3.to_str()<< ":\n";
+                    std::cout << "Before:\n" << save_info << "\n" << save_pretty << "\n" << save_pretty_bb << "\n";
+                    std::cout << "After:\n" << now_info << "\n" << now_pretty << "\n" << now_pretty_bb << "\n";
+                    return -1;
+                }
+                board.do_move(m);
+                board.do_move(m2);
+            } 
+            board.undo_move();
+        
+        }
+
+        board.undo_move();
+        
+        if(now_info != save_info || now_pretty != save_pretty || now_pretty_bb != save_pretty_bb){
+            std::cout << "Error after move " << m.to_str() << ":\n";
+            std::cout << "Before:\n" << save_info << "\n" << save_pretty << "\n" << save_pretty_bb << "\n";
+            std::cout << "After:\n" << now_info << "\n" << now_pretty << "\n" << now_pretty_bb << "\n";
+            return -1;
+        }
+        
+    }*/
+   
+    Board board("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+
+    int depth = 6;
+    std::cout << "Starting perft test from position:\n" << board.get_board_pretty() << "\n";
+    int result = perft(board, depth);
+    std::cout << "Perft to depth " << depth << ": " <<  result << std::endl;
+
 
     return 0;
 }

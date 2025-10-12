@@ -74,6 +74,28 @@ void gen_moves_pawns(Board& b,GenMoveType type, BitBoard target, MoveSaver* move
                 *(moves) += Move(s-(forwardDir+WEST),s);
             }
 
+            if(b.get_enpassant() != EP_NONE){
+                BitBoard epTarget = get_mask(static_cast<Square>(b.get_enpassant()));
+                //std::cout << "ep target: \n" << print_bitboard(epTarget) << std::endl;
+                BitBoard epE = shift_bb(otherPawns,forwardDir+EAST) & epTarget;
+                //std::cout << "epE: \n" << print_bitboard(epE) << std::endl;
+                while (epE)
+                {
+                    Square s = pop_lsb(epE);
+                    
+                    *(moves) += Move(s-(forwardDir+EAST),s,EN_PASSANT);
+                }
+
+                BitBoard epW = shift_bb(otherPawns,forwardDir+WEST) & epTarget;
+                //std::cout << "epW: \n" << print_bitboard(epW) << std::endl;
+                while (epW)
+                {
+                    Square s = pop_lsb(epW);
+                    
+                    *(moves) += Move(s-(forwardDir+WEST),s,EN_PASSANT);
+                }
+            }
+
         }else{
             BitBoard push = shift_bb(otherPawns,forwardDir) & target;
             BitBoard doublePush = shift_bb(push,forwardDir) & target & get_mask(fourthRank);
@@ -96,6 +118,8 @@ void gen_moves_pawns(Board& b,GenMoveType type, BitBoard target, MoveSaver* move
 
 
         }
+
+
     }
 
 
@@ -174,8 +198,12 @@ void generate_moves(Board& b, GenMoveType g, MoveSaver* moves){
 
 
 void generate_moves_legal(Board& b, MoveSaver* moves){
-    b.get_board_pretty();
-    moves = moves;
+    MoveSaver pseudo_moves(b,ALL);
+    for(const Move& m : pseudo_moves){
+        if(b.is_legal(m)){
+            *(moves) += m;
+        }
+    }
 }
 
 

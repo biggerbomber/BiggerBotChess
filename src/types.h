@@ -133,22 +133,22 @@ inline Castling& operator&=(Castling &a, Castling b) {
 
 enum Enpassant : uint8_t {
     EP_NONE = 0,
-    EP_A2 = S_A2,
-    EP_B2 = S_B2,
-    EP_C2 = S_C2,
-    EP_D2 = S_D2,
-    EP_E2 = S_E2,
-    EP_F2 = S_F2,
-    EP_G2 = S_G2,
-    EP_H2 = S_H2,
-    EP_A7 = S_A7,
-    EP_B7 = S_B7,
-    EP_C7 = S_C7,
-    EP_D7 = S_D7,
-    EP_E7 = S_E7,
-    EP_F7 = S_F7,
-    EP_G7 = S_G7,
-    EP_H7 = S_H7
+    EP_A3 = S_A3,
+    EP_B3 = S_B3,
+    EP_C3 = S_C3,
+    EP_D3 = S_D3,
+    EP_E3 = S_E3,
+    EP_F3 = S_F3,
+    EP_G3 = S_G3,
+    EP_H3 = S_H3,
+    EP_A6 = S_A6,
+    EP_B6 = S_B6,
+    EP_C6 = S_C6,
+    EP_D6 = S_D6,
+    EP_E6 = S_E6,
+    EP_F6 = S_F6,
+    EP_G6 = S_G6,
+    EP_H6 = S_H6
 };
 
 enum PieceType {
@@ -181,4 +181,8 @@ enum Piece {
     B_KING
 };
 
-}// namespace BIggerBOtChess
+inline PieceType get_piece_type(Piece p){
+    if(p == NONE_PIECE) return NONE;
+    return static_cast<PieceType>(p & ((1 << BLACK_PIECE_OFFSET)-1));
+}
+}// namespace BiggerBotChess

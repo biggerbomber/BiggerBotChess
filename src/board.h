@@ -2,6 +2,8 @@
 #include "types.h"
 #include "move.h"
 #include "bitboard.h"
+#include <vector>
+#include <iostream>
 
 namespace BiggerBotChess {
 
@@ -28,17 +30,29 @@ public:
     BitBoard get_pieces(Color c, PieceType p = ALL_PIECES);
     Piece get_piece_on(Square s) const { return m_Board[s];};
     Color get_color() const{ return m_ColorToMove;};
+    Enpassant get_enpassant() const { return m_Enpassant;};
 
 
     Piece make_piece(Color c, PieceType p);
 
 
     bool is_square_attacked(Square s, Color by) const;
+    bool is_legal(const Move& m); 
 
+    //This function makes the move without checking legality
+    void unsafe_do_move(const Move& m);
+    
+    bool do_move(const Move& m,bool trust_legal); //returns false if move is illegal
+
+    //this function undoes the last move, uses the move list
+    void undo_move();
 
     //this checks if the 2 squares are free and not attacked
     bool is_castle_possible(Color c, Castling side) const;
 
+    void do_castle( Castling side, bool undo = false);
+
+    void update_occupancy();
 
 
     Piece m_Board [S_NUM];
@@ -58,6 +72,13 @@ public:
 
     uint16_t m_HalfmoveClock = 0;
     uint16_t m_FullmoveNumber = 0;
+
+    std::vector<Move> m_MoveList;
+    std::vector<Piece> m_CapturedPieces;
+    std::vector<Castling> m_CastlingRightsList;
+    std::vector<Enpassant> m_EnpassantList;
+    std::vector<uint16_t> m_HalfmoveClockList;
+
 };
 
 } // namespace BiggerBotChess
