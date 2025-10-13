@@ -2,6 +2,7 @@
 #include "board.h"
 #include "move.h"
 #include "movegenerator.h"
+#include "uci.h"
 #include <algorithm>
 using namespace BiggerBotChess;
 
@@ -13,10 +14,14 @@ int perft(Board& board, int depth) {
 
     int nodes = 0;
     for (const Move& move : moves) {
+        
         board.do_move(move,true);
 
         int now = perft(board, depth - 1);
         nodes += now;
+        if(depth == 7){
+            std::cout << move.to_str() << " " << now <<"\n";
+        }
        
         board.undo_move();
     }
@@ -27,10 +32,14 @@ int perft(Board& board, int depth) {
 int main() {
     
 
-    std::cout << "Hello, BiggerBotChess!" << std::endl;
+    std::cout << "Hello! I am BiggerBotChess!" << std::endl;
 
     Board::init();
     BB::init();
+
+    UCIEngine engine;
+    engine.main_loop();
+
 
     //Perft test
     
@@ -88,9 +97,9 @@ int main() {
         
     }*/
    
-    Board board("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    Board board;
 
-    int depth = 6;
+    int depth = 7;
     std::cout << "Starting perft test from position:\n" << board.get_board_pretty() << "\n";
     int result = perft(board, depth);
     std::cout << "Perft to depth " << depth << ": " <<  result << std::endl;

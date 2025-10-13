@@ -29,6 +29,7 @@ constexpr uint8_t PIECE_CONV_OFSET = 2;
 class Move {
 public:
 
+    static Move null(){return Move();}
     inline Square get_start() const{
         return static_cast<Square>((m_data & (0x3FU << 6)) >> 6);
     };
@@ -49,7 +50,7 @@ public:
     };
 
     inline std::string to_str() const{
-        std::string move_str = square_to_str(get_start()) + "->" + square_to_str(get_dest());
+        std::string move_str = square_to_str(get_start()) + square_to_str(get_dest());
         if(get_type() == PROMOTION){
             switch (get_promotion_piece())
             {
@@ -59,19 +60,20 @@ public:
                 case QUEEN:  move_str += 'q'; break;
                 default: break;
             }
-        }else if(get_type() == CASTLE){
-            move_str += " (castle)";
         }
         return move_str;
     };
 
-    Move(){
-        m_data = 0;
+    inline bool operator==(const Move& other){
+        return m_data == other.m_data;
     };
+   
     Move(Square start, Square dest, MoveType type = NORMAL, PieceType prom_piece = KNIGHT){
         m_data = (type << 14) + ((prom_piece - PIECE_CONV_OFSET) << 12) + (start << 6) + dest;
     };
-
+    Move(){
+        m_data = 0;
+    };
     uint16_t m_data = 0;
 };
 

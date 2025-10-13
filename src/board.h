@@ -4,6 +4,7 @@
 #include "bitboard.h"
 #include <vector>
 #include <iostream>
+#include <regex>
 
 namespace BiggerBotChess {
 
@@ -53,6 +54,9 @@ public:
     void do_castle( Castling side, bool undo = false);
 
     void update_occupancy();
+
+    //Returns Move::null() if invalid or illegal
+    Move str_to_move(const std::string& str) const;
 
 
     Piece m_Board [S_NUM];

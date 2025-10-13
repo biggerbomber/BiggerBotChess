@@ -1,4 +1,5 @@
 #include "board.h"
+#include "movegenerator.h"
 #include <cassert>
 #include <cstring>
 
@@ -903,6 +904,47 @@ std::string Board::get_board_pretty() const {
     }
 
     return board_str;
+}
+
+Move Board::str_to_move(const std::string& move_str) const {
+    //regex to match move strings 
+    std::regex move_regex("([a-h][1-8])([a-h][1-8])([nbrq])?");
+    std::smatch sm;
+    if(!std::regex_search(move_str,sm, move_regex)) {
+        return Move::null();
+    }
+    Square start = str_to_square(sm[1]);
+    Square dest = str_to_square(sm[2]);
+
+    PieceType promo_piece = NONE;
+    if(sm[3].matched) {
+        char promo_char = sm[3].str()[0];
+        switch(promo_char) {
+            case 'n': promo_piece = KNIGHT; break;
+            case 'b': promo_piece = BISHOP; break;
+            case 'r': promo_piece = ROOK; break;
+            case 'q': promo_piece = QUEEN; break;
+            default: return Move::null();
+        }
+    }
+
+    MoveSaver move_saver(*this,LEGAL);
+
+    for(const Move& m : move_saver){
+        if(m.get_start() == start && m.get_dest() == dest) {
+            if(m.get_type() == PROMOTION) {
+                if(m.get_promotion_piece() == promo_piece) {
+                    return m;
+                }
+            } else {
+                if(promo_piece == NONE) {
+                    return m;
+                }
+            }
+        }
+    }
+
+    return Move::null();
 }
 
 } // namespace BiggerBotChess
