@@ -4,18 +4,21 @@
 #include "movegenerator.h"
 #include "uci.h"
 #include <algorithm>
+#include <chrono>
 using namespace BiggerBotChess;
 
 int perft(Board& board, int depth) {
     if (depth == 0) return 1;
 
-    MoveSaver moves(board, LEGAL);
+    MoveSaver moves(board, ALL);
     if (moves.is_empty()) return 0;   
 
     int nodes = 0;
     for (const Move& move : moves) {
         
-        board.do_move(move,true);
+        if(!board.do_move(move,false)){
+            continue;
+        }
 
         int now = perft(board, depth - 1);
         nodes += now;
@@ -33,9 +36,33 @@ int main() {
     
 
     std::cout << "Hello! I am BiggerBotChess!" << std::endl;
+    
 
     Board::init();
     BB::init();
+
+    Board b;
+    std::cout <<"started perft test\n";
+    //time it 
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+
+    auto t1 = high_resolution_clock::now();
+    std::cout << perft(b, 6) << std::endl;
+    auto t2 = high_resolution_clock::now();
+
+    /* Getting number of milliseconds as an integer. */
+    auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
+    /* Getting number of milliseconds as a double. */
+    duration<double, std::milli> ms_double = t2 - t1;
+
+    std::cout << ms_int.count() << "ms\n";
+    std::cout << ms_double.count() << "ms\n";
+    
+    std::cout <<"finished perft test\n";
 
     UCIEngine engine;
     engine.main_loop();
