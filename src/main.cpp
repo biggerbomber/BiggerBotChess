@@ -22,7 +22,7 @@ int perft(Board& board, int depth) {
 
         int now = perft(board, depth - 1);
         nodes += now;
-        if(depth == 7){
+        if(depth == 10){
             std::cout << move.to_str() << " " << now <<"\n";
         }
        
@@ -43,6 +43,7 @@ int main() {
 
     Board b;
     std::cout <<"started perft test\n";
+    std::cin.get();
     //time it 
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
@@ -50,36 +51,40 @@ int main() {
     using std::chrono::milliseconds;
 
     auto t1 = high_resolution_clock::now();
-    std::cout << perft(b, 6) << std::endl;
+    std::cout << perft(b, 7) << std::endl;
     auto t2 = high_resolution_clock::now();
 
-    /* Getting number of milliseconds as an integer. */
+     //Getting number of milliseconds as an integer. 
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
 
-    /* Getting number of milliseconds as a double. */
+     //Getting number of milliseconds as a double. 
     duration<double, std::milli> ms_double = t2 - t1;
 
     std::cout << ms_int.count() << "ms\n";
     std::cout << ms_double.count() << "ms\n";
     
     std::cout <<"finished perft test\n";
-
+/*
     UCIEngine engine;
-    engine.main_loop();
+    engine.main_loop();*/
 
 
     //Perft test
     
-    
     /*
+    Board board("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8  ");
     
     std::string save_info = board.get_board_info();
     std::string save_pretty =  board.get_board_pretty();
     std::string save_pretty_bb =  board.get_board_pretty_bb();
 
+    std::cout<<board.m_StateHistoryIndex<<"\n";
+
     MoveSaver moves(board, LEGAL);
     for(const Move& m : moves){
-        board.do_move(m);
+       // std::cout << "Doing move: " << m.to_str() << "\n";
+        board.do_move(m,false);
+        board.sanity_check();
         MoveSaver moves2(board, LEGAL);
         std::string now_info = board.get_board_info();
         std::string now_pretty =  board.get_board_pretty();
@@ -87,15 +92,23 @@ int main() {
         for(const Move& m2 : moves2){
             //std::cout << "len moves : " << board.m_MoveList.size() << std::endl;
             
-            //std::cout << board.get_board_pretty() << "\n";
-            board.do_move(m2);
+           // std::cout << "Doing move: "<< m.to_str() << " && " << m2.to_str() << "\n";
+            board.do_move(m2,false);
+            board.sanity_check();
             MoveSaver moves3(board, LEGAL);
             for(const Move& m3 : moves3){
-                //std::cout << "Doing move: " << m.to_str() << " && "<< m2.to_str() << " && "<<m3.to_str() << "\n";
-                board.do_move(m3);
+                std::cout << "Doing move: " << m.to_str() << " && "<< m2.to_str() << " && "<<m3.to_str() << "\n";
+                board.do_move(m3,false);
+                
+                //std::cout << board.get_board_info() << "\n";
+                board.sanity_check();
                 board.undo_move();
+                
+                board.sanity_check();
                 board.undo_move();
+                board.sanity_check();
                 board.undo_move();
+                board.sanity_check();
                 now_info = board.get_board_info();
                 now_pretty =  board.get_board_pretty();
                 now_pretty_bb =  board.get_board_pretty_bb();
@@ -106,8 +119,8 @@ int main() {
                     std::cout << "After:\n" << now_info << "\n" << now_pretty << "\n" << now_pretty_bb << "\n";
                     return -1;
                 }
-                board.do_move(m);
-                board.do_move(m2);
+                board.do_move(m,false);
+                board.do_move(m2,false);
             } 
             board.undo_move();
         
@@ -122,15 +135,15 @@ int main() {
             return -1;
         }
         
-    }*/
+    }
    
-    Board board;
+
 
     int depth = 7;
     std::cout << "Starting perft test from position:\n" << board.get_board_pretty() << "\n";
     int result = perft(board, depth);
     std::cout << "Perft to depth " << depth << ": " <<  result << std::endl;
-
+*/
 
     return 0;
 }

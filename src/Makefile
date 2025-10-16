@@ -1,5 +1,5 @@
 CXX = g++
-CFLAGS = -Ofast -march=native -Wall -Wextra
+CFLAGS = -O3 -march=native -mtune=native -fomit-frame-pointer -Wall 
 ODIR = obj
 SRC = bitboard.cpp board.cpp main.cpp movegenerator.cpp search.cpp uci.cpp
 OBJ = $(patsubst %.cpp,$(ODIR)/%.o,$(SRC))

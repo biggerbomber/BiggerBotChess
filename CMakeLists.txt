@@ -11,7 +11,7 @@ else()
 endif()
 # Set default build type to Debug if not specified
 if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE Release)
+	set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 # Collect all .cpp files in src/

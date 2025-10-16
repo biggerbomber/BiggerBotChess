@@ -5,13 +5,24 @@
 #include <vector>
 #include <iostream>
 #include <regex>
+#include <array>
 
 namespace BiggerBotChess {
+
+struct BoardState{
+    Move move;
+    Piece capturedPiece;
+    Castling castlingRights;
+    Enpassant enpassant;
+    uint16_t halfmoveClock;
+    uint16_t fullplyNumber;
+};
 
 class Board {
 public:
     // static things
     static void init();
+    static Castling m_CastelingMask[S_NUM];
 
     constexpr static char  START_FEN [] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -28,10 +39,18 @@ public:
 
     //Piece info Bitboard
     BitBoard get_pieces() { return m_Occupancy;};
-    BitBoard get_pieces(Color c, PieceType p = ALL_PIECES);
-    Piece get_piece_on(Square s) const { return m_Board[s];};
-    Color get_color() const{ return m_ColorToMove;};
-    Enpassant get_enpassant() const { return m_Enpassant;};
+    inline BitBoard get_pieces(Color c, PieceType p = ALL_PIECES){
+        BitBoard * start = &m_Pawns[0];
+        return start[static_cast<int>(p-1)*2 + static_cast<int>(c)];
+    }
+    inline BitBoard& get_pieces_ref(Color c, PieceType p){
+        BitBoard * start = &m_Pawns[0];
+        return start[static_cast<int>(p-1)*2 + static_cast<int>(c)];
+    }
+
+    inline Piece get_piece_on(Square s) const { return m_Board[s];};
+    inline Color get_color() const{ return m_ColorToMove;};
+    inline Enpassant get_enpassant() const { return m_StateHistory[m_StateHistoryIndex-1].enpassant;};
 
 
     Piece make_piece(Color c, PieceType p);
@@ -39,6 +58,9 @@ public:
 
     bool is_square_attacked(Square s, Color by) const;
     bool is_legal(const Move& m); 
+
+    //for debugging, if the board is in a invalid state it will assert
+    void sanity_check();
 
     //This function makes the move without checking legality
     void unsafe_do_move(const Move& m);
@@ -58,31 +80,25 @@ public:
     //Returns Move::null() if invalid or illegal
     Move str_to_move(const std::string& str) const;
 
-
+    Color m_ColorToMove = WHITE;
+    
+    // Castling rights
+    std::array<BoardState,256> m_StateHistory;
+    size_t m_StateHistoryIndex = 0;
     Piece m_Board [S_NUM];
     BitBoard m_Occupancy = {0};
-    BitBoard m_Pieces[COLOR_NUM] = {0};
+    BitBoard m_Buffers[COLOR_NUM] = {0};
     BitBoard m_Pawns[COLOR_NUM] = {0};
     BitBoard m_Knights[COLOR_NUM] = {0};
     BitBoard m_Bishops[COLOR_NUM] = {0};
     BitBoard m_Rooks[COLOR_NUM] = {0};
     BitBoard m_Queens[COLOR_NUM] = {0};
     BitBoard m_Kings[COLOR_NUM] = {0};
-    Color m_ColorToMove = WHITE;
+    BitBoard m_Pieces[COLOR_NUM] = {0};
+
+    //helper
     
-    // Castling rights
-    Castling m_CastlingRights = CASTLE_NONE;
-    Enpassant m_Enpassant = EP_NONE;
-
-    uint16_t m_HalfmoveClock = 0;
-    uint16_t m_FullmoveNumber = 0;
-
-    std::vector<Move> m_MoveList;
-    std::vector<Piece> m_CapturedPieces;
-    std::vector<Castling> m_CastlingRightsList;
-    std::vector<Enpassant> m_EnpassantList;
-    std::vector<uint16_t> m_HalfmoveClockList;
-
+    
 };
 
 } // namespace BiggerBotChess

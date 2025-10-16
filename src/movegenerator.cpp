@@ -126,7 +126,9 @@ void gen_moves_pawns(Board& b,GenMoveType type, BitBoard target, MoveSaver* move
 
 
 };
-void gen_moves_general(Board& b, PieceType type, BitBoard target, MoveSaver* moves){
+
+template<PieceType type>
+void gen_moves_general(Board& b, BitBoard target, MoveSaver* moves){
     BitBoard occ = b.get_pieces();
     Color c = b.get_color();
 
@@ -136,7 +138,7 @@ void gen_moves_general(Board& b, PieceType type, BitBoard target, MoveSaver* mov
 
         Square start = pop_lsb(pieces);
 
-        BitBoard attacks = BB::get_attacks(start,type,occ) & target;
+        BitBoard attacks = BB::get_attacks<type>(start,occ) & target;
 
         while (attacks)
         {
@@ -154,11 +156,11 @@ void i_generate(Board& b , GenMoveType genType, MoveSaver* moves){
                     : ~b.get_pieces(b.get_color());
 
     gen_moves_pawns(b,genType,target,moves);
-    gen_moves_general(b,KNIGHT,target,moves);
-    gen_moves_general(b,BISHOP,target,moves);
-    gen_moves_general(b,ROOK,target,moves);
-    gen_moves_general(b,QUEEN,target,moves);
-    gen_moves_general(b,KING,target,moves);
+    gen_moves_general<KNIGHT>(b,target,moves);
+    gen_moves_general<BISHOP>(b,target,moves);
+    gen_moves_general<ROOK>(b,target,moves);
+    gen_moves_general<QUEEN>(b,target,moves);
+    gen_moves_general<KING>(b,target,moves);
 
 
     //Castling

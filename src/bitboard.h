@@ -81,6 +81,10 @@ inline Square pop_lsb(BitBoard& b){
     return s;
 }
 
+inline int pop_count(BitBoard b){
+    return __builtin_popcountll(b);
+}
+
 BitBoard move_safe(Square s, int step);
 
 struct Magic
@@ -108,7 +112,10 @@ class BB{
     static void init();
     static void init_magics(PieceType p);
 
-    static BitBoard get_attacks(Square s, PieceType p, BitBoard occupancy = 0);
+    template<PieceType type>
+    inline static BitBoard get_attacks(Square s, BitBoard occupancy = 0);
+
+    static BitBoard get_attacks(Square s, PieceType type, BitBoard occupancy);
 
     static BitBoard get_sliding_attacks(Square s, PieceType p, BitBoard occupancy = 0);
     static BitBoard get_pawn_attacks(Square s, Color c);
@@ -130,7 +137,22 @@ class BB{
 };
 
 
+template<PieceType type>
+inline BitBoard BB::get_attacks(Square s, BitBoard occupancy){
+    assert(s_IsInit);
+    assert(type != PAWN);
 
+    switch (type)
+    {
+    case BISHOP:
+    case ROOK:
+        return s_Magics[s][type-BISHOP].get_attacks(occupancy);
+    case QUEEN:
+        return s_Magics[s][0].get_attacks(occupancy) | s_Magics[s][1].get_attacks(occupancy);
+    default:
+        return s_PlainAttacks[type][s];
+    }
+}
 
 std::string print_bitboard(BitBoard bb);
 

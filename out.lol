@@ -13,3 +13,5 @@ go
 info score cp -320 depth 6
 bestmove b1c3
 go
+[A
+¹

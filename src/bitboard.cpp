@@ -136,19 +136,22 @@ void BB::init_magics(PieceType p){
 }
 
 
-BitBoard BB::get_attacks(Square s, PieceType p, BitBoard occupancy){
-    assert(s_IsInit);
-    assert(p != PAWN);
 
-    switch (p)
+
+
+BitBoard BB::get_attacks(Square s, PieceType type, BitBoard occupancy){
+    assert(s_IsInit);
+    assert(type != PAWN);
+
+    switch (type)
     {
     case BISHOP:
     case ROOK:
-        return s_Magics[s][p-BISHOP].get_attacks(occupancy);
+        return s_Magics[s][type-BISHOP].get_attacks(occupancy);
     case QUEEN:
         return s_Magics[s][0].get_attacks(occupancy) | s_Magics[s][1].get_attacks(occupancy);
     default:
-        return s_PlainAttacks[p][s];
+        return s_PlainAttacks[type][s];
     }
 }
 

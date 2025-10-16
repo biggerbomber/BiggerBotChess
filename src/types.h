@@ -6,14 +6,14 @@
 namespace BiggerBotChess {
 
 
-enum Color : uint8_t {
+enum Color {
     WHITE,
     BLACK,
     COLOR_NUM = 2
 };
 
 
-enum Square : uint8_t{
+enum Square{
     S_A1, S_B1, S_C1, S_D1, S_E1, S_F1, S_G1, S_H1,
     S_A2, S_B2, S_C2, S_D2, S_E2, S_F2, S_G2, S_H2,
     S_A3, S_B3, S_C3, S_D3, S_E3, S_F3, S_G3, S_H3,
@@ -28,7 +28,7 @@ enum Square : uint8_t{
     S_NUM = 64
 };
 
-enum Rank : uint8_t {
+enum Rank :uint8_t{
     RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8,
     RANK_FIRST = RANK_1,
     RANK_LAST = RANK_8,
@@ -36,7 +36,7 @@ enum Rank : uint8_t {
     RANK_OVERFLOW = 255
 };
 
-enum File : uint8_t {
+enum File :uint8_t{
     FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H,
     FILE_FIRST = FILE_A,
     FILE_LAST = FILE_H,
@@ -46,7 +46,7 @@ enum File : uint8_t {
 
 
 inline Color operator~(Color c){
-    return static_cast<Color>(static_cast<int>(c) ^ 1);
+    return static_cast<Color>(static_cast<unsigned int>(c) ^ 1);
 }
 inline Square& operator++(Square &s){
     return s = static_cast<Square>(static_cast<uint8_t>(s) + 1);
@@ -103,7 +103,7 @@ inline std::string square_to_str(Square sq) {
 }
 
 
-enum Castling : uint8_t {
+enum Castling {
     KING_SIDE = 1,
     QUEEN_SIDE = 2,
     WHITE_KING_SIDE  = KING_SIDE,
@@ -131,7 +131,7 @@ inline Castling& operator&=(Castling &a, Castling b) {
     return a;
 }
 
-enum Enpassant : uint8_t {
+enum Enpassant {
     EP_NONE = 0,
     EP_A3 = S_A3,
     EP_B3 = S_B3,
@@ -182,7 +182,11 @@ enum Piece {
 };
 
 inline PieceType get_piece_type(Piece p){
-    if(p == NONE_PIECE) return NONE;
     return static_cast<PieceType>(p & ((1 << BLACK_PIECE_OFFSET)-1));
+}
+
+inline Color get_color_of(Piece p){
+    assert(p != NONE_PIECE);
+    return static_cast<Color>((p >> BLACK_PIECE_OFFSET) & 1);
 }
 }// namespace BiggerBotChess
