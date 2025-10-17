@@ -1,6 +1,7 @@
 #include "board.h"
 #include "movegenerator.h"
 #include <cassert>
+#include <chrono>
 #include <cstring>
 
 namespace BiggerBotChess {
@@ -10,17 +11,18 @@ Castling Board::m_CastelingMask[S_NUM] = {CASTLE_NONE};
 void Board::init() {
 
     //init castling masks
+     for(Square s = S_FIRST; s <= S_LAST; ++s){
+        
+        m_CastelingMask[s] = CASTLE_NONE;;
+        
+    }
     m_CastelingMask[S_E1] = WHITE_KING_SIDE | WHITE_QUEEN_SIDE;
     m_CastelingMask[S_H1] = WHITE_KING_SIDE;
     m_CastelingMask[S_A1] = WHITE_QUEEN_SIDE;
     m_CastelingMask[S_E8] = BLACK_KING_SIDE | BLACK_QUEEN_SIDE;
     m_CastelingMask[S_H8] = BLACK_KING_SIDE;
     m_CastelingMask[S_A8] = BLACK_QUEEN_SIDE;
-    for(Square s = S_FIRST; s <= S_LAST; ++s){
-        if(m_CastelingMask[s] == CASTLE_NONE){
-            m_CastelingMask[s] = CASTLE_ALL;
-        }
-    }
+   
 }
 
 Board::Board(   const std::string& fen,
@@ -127,6 +129,8 @@ Board::Board(   const std::string& fen,
         } else if (get_rank(ep_sq) == RANK_6 && m_ColorToMove == WHITE){
             st.enpassant = static_cast<Enpassant>(ep_sq);
         }
+    }else{
+        st.enpassant = EP_NONE;
     }
 
     pos_start=pos_end+1;
@@ -403,6 +407,7 @@ void Board::do_castle(Castling side, bool undo) {
 
 void Board::unsafe_do_move(const Move& m) {
 
+
     assert(m_StateHistoryIndex > 0 && "No board state to copy from");
     Square start = m.get_start();
     Square dest = m.get_dest();
@@ -411,12 +416,13 @@ void Board::unsafe_do_move(const Move& m) {
     BoardState& old_st = m_StateHistory[m_StateHistoryIndex-1];
     BoardState& st = m_StateHistory[m_StateHistoryIndex++];
 
-    st = old_st; // copy old state
+    // copy old state
     st.move = m;
     st.capturedPiece = NONE_PIECE;
+    st.castlingRights = old_st.castlingRights;
     st.enpassant = EP_NONE;
-    st.halfmoveClock++;
-    st.fullplyNumber++;
+    st.halfmoveClock = old_st.halfmoveClock+1;
+    st.fullplyNumber = old_st.fullplyNumber + 1;
 
     if(type ==NORMAL)
         {
@@ -464,6 +470,7 @@ void Board::unsafe_do_move(const Move& m) {
         }else if(type == CASTLE)
         {
             Castling side = (dest > start) ? KING_SIDE : QUEEN_SIDE;
+            //std::cout << "doinug castle\n";
             do_castle(side);
         
         }

@@ -5,6 +5,7 @@
 #include "uci.h"
 #include <algorithm>
 #include <chrono>
+#include "test.h"
 using namespace BiggerBotChess;
 
 int perft(Board& board, int depth) {
@@ -41,9 +42,14 @@ int main() {
     Board::init();
     BB::init();
 
+    //Test::run_all();
+
+    //UCIEngine engine;
+    //engine.main_loop();
+
     Board b;
     std::cout <<"started perft test\n";
-    std::cin.get();
+   // std::cin.get();
     //time it 
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
@@ -51,8 +57,9 @@ int main() {
     using std::chrono::milliseconds;
 
     auto t1 = high_resolution_clock::now();
-    std::cout << perft(b, 7) << std::endl;
+    int res = perft(b, 6);
     auto t2 = high_resolution_clock::now();
+    std::cout<<res<<std::endl;
 
      //Getting number of milliseconds as an integer. 
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
@@ -64,9 +71,8 @@ int main() {
     std::cout << ms_double.count() << "ms\n";
     
     std::cout <<"finished perft test\n";
-/*
-    UCIEngine engine;
-    engine.main_loop();*/
+
+    
 
 
     //Perft test
