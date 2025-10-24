@@ -9,6 +9,8 @@
 
 namespace BiggerBotChess {
 
+
+
 struct BoardState{
     Move move;
     Piece capturedPiece;
@@ -31,6 +33,7 @@ public:
             const std::string& moves = "");
 
     void clear();
+    void init_zobrist_key();
 
     //General Info
     std::string get_board_info() const;
@@ -38,19 +41,21 @@ public:
     std::string get_board_pretty() const;
 
     //Piece info Bitboard
-    BitBoard get_pieces() { return m_Occupancy;};
-    inline BitBoard get_pieces(Color c, PieceType p = ALL_PIECES){
-        BitBoard * start = &m_Pawns[0];
-        return start[static_cast<int>(p-1)*2 + static_cast<int>(c)];
+    BitBoard get_pieces() const { return m_Occupancy;};
+    inline BitBoard get_pieces(Color c, PieceType p = ALL_PIECES) const {
+        const BitBoard * start = &m_Buffers[0];
+        return start[static_cast<int>(p)*2 + static_cast<int>(c)];
     }
     inline BitBoard& get_pieces_ref(Color c, PieceType p){
-        BitBoard * start = &m_Pawns[0];
-        return start[static_cast<int>(p-1)*2 + static_cast<int>(c)];
+        BitBoard * start = &m_Buffers[0];
+        return start[static_cast<int>(p)*2 + static_cast<int>(c)];
     }
 
     inline Piece get_piece_on(Square s) const { return m_Board[s];};
     inline Color get_color() const{ return m_ColorToMove;};
     inline Enpassant get_enpassant() const { return m_StateHistory[m_StateHistoryIndex-1].enpassant;};
+
+    inline Key get_key() const { return m_ZobristKey; }
 
 
     Piece make_piece(Color c, PieceType p);
@@ -77,6 +82,23 @@ public:
 
     void update_occupancy();
 
+    inline void remove_piece_bb(Square sq){
+        Piece p = get_piece_on(sq);
+        Color c = get_color_of(p);
+        BitBoard& pieces = get_pieces_ref(c,get_piece_type(p));
+
+        pieces &= ~get_mask(sq);
+        m_Pieces[c] &= ~get_mask(sq);
+    }
+    inline void put_piece_bb(Square sq, Piece p){
+        //Piece p = get_piece_on(sq);
+        Color c = get_color_of(p);
+        BitBoard& pieces = get_pieces_ref(c,get_piece_type(p));
+
+        pieces |= get_mask(sq);
+        m_Pieces[c] |= get_mask(sq);
+    }
+
     //Returns Move::null() if invalid or illegal
     Move str_to_move(const std::string& str) const;
 
@@ -97,6 +119,8 @@ public:
     BitBoard m_Pieces[COLOR_NUM] = {0};
 
     //helper
+
+    Key m_ZobristKey = 0;
     
     
 };

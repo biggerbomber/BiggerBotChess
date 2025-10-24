@@ -8,20 +8,21 @@
 #include "test.h"
 using namespace BiggerBotChess;
 
-int perft(Board& board, int depth) {
+uint64_t perft(Board& board, int depth) {
     if (depth == 0) return 1;
 
-    MoveSaver moves(board, ALL);
-    if (moves.is_empty()) return 0;   
+    MoveSaver moves(board, LEGAL);
+    if (moves.is_empty()) return 0;
+    if (depth == 1 ) return moves.size();   
 
-    int nodes = 0;
+    uint64_t nodes = 0;
     for (const Move& move : moves) {
         
-        if(!board.do_move(move,false)){
+        if(!board.do_move(move,true)){
             continue;
         }
 
-        int now = perft(board, depth - 1);
+        uint64_t now = perft(board, depth - 1);
         nodes += now;
         if(depth == 10){
             std::cout << move.to_str() << " " << now <<"\n";
@@ -42,7 +43,7 @@ int main() {
     Board::init();
     BB::init();
 
-    //Test::run_all();
+    Test::run_all();
 
     //UCIEngine engine;
     //engine.main_loop();
@@ -57,7 +58,7 @@ int main() {
     using std::chrono::milliseconds;
 
     auto t1 = high_resolution_clock::now();
-    int res = perft(b, 6);
+    uint64_t res = perft(b, 6);
     auto t2 = high_resolution_clock::now();
     std::cout<<res<<std::endl;
 

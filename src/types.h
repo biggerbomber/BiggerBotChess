@@ -189,4 +189,8 @@ inline Color get_color_of(Piece p){
     assert(p != NONE_PIECE);
     return static_cast<Color>((p >> BLACK_PIECE_OFFSET) & 1);
 }
+
+
+using Key = uint64_t;
+
 }// namespace BiggerBotChess

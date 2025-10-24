@@ -17,13 +17,13 @@ enum GenMoveType{
     LEGAL
 };
 
-void generate_moves(Board&, GenMoveType, MoveSaver*);
-void generate_moves_legal(Board&, MoveSaver*);
+void generate_moves(const Board&, const GenMoveType&, MoveSaver*);
+void generate_moves_legal(Board, MoveSaver*);
 
 
 class MoveSaver{
 public:
-    MoveSaver(Board b, GenMoveType ty){
+    MoveSaver(const Board& b, const GenMoveType& ty){
         if(ty==LEGAL){
             generate_moves_legal(b,this);
         } else {
@@ -40,6 +40,11 @@ public:
 
     const Move* begin() const{ return &m_data[0]; };
     const Move* end() const { return &m_data[0]+m_free_pos;};
+
+    Move operator[](size_t index) const {
+        assert(index < m_free_pos);
+        return m_data[index];
+    }
 
     size_t size() const { return m_free_pos;}
     bool is_empty() {return size()==0;}

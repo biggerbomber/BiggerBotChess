@@ -6,6 +6,74 @@
 
 namespace BiggerBotChess {
 
+namespace ZHash
+{
+
+Key pph[PIECE_NUM][S_NUM];
+Key blackTurn;
+Key castlingRights[16];
+Key enpassantFile[FILE_NUM]; 
+
+// xorshift64star Pseudo-Random Number Generator
+// This class is based on original code written and dedicated
+// to the public domain by Sebastiano Vigna (2014).
+// It has the following characteristics:
+//
+//  -  Outputs 64-bit numbers
+//  -  Passes Dieharder and SmallCrush test batteries
+//  -  Does not require warm-up, no zeroland to escape
+//  -  Internal state is a single 64-bit integer
+//  -  Period is 2^64 - 1
+//  -  Speed: 1.60 ns/call (Core i7 @3.40GHz)
+//
+// For further analysis see
+//   <http://vigna.di.unimi.it/ftp/papers/xorshift.pdf>
+
+class PRNG {
+
+    uint64_t s;
+
+    uint64_t rand64() {
+
+        s ^= s >> 12, s ^= s << 25, s ^= s >> 27;
+        return s * 2685821657736338717LL;
+    }
+
+   public:
+    PRNG(uint64_t seed) :
+        s(seed) {
+        assert(seed);
+    }
+
+    template<typename T>
+    T rand() {
+        return T(rand64());
+    }
+
+};
+void init(){
+
+    //initialize zobrist hash keys
+    PRNG prng(0xF00DDEADBEEFCAFE);
+    for(int p = PAWN; p < PIECE_NUM; ++p){
+        for(Square s = S_FIRST; s < S_LAST; ++s){
+            pph[p][s] = prng.rand<Key>();
+        }
+    }
+
+    blackTurn = prng.rand<Key>();
+
+    for(int i =0; i <16; ++i){
+        ZHash::castlingRights[i] = prng.rand<Key>();
+    }
+
+    for(int f = FILE_A; f <= FILE_H; ++f){
+        enpassantFile[f] = prng.rand<Key>();
+    }
+
+}
+} // namespace ZHash
+
 Castling Board::m_CastelingMask[S_NUM] = {CASTLE_NONE};
 
 void Board::init() {
@@ -23,6 +91,7 @@ void Board::init() {
     m_CastelingMask[S_H8] = BLACK_KING_SIDE;
     m_CastelingMask[S_A8] = BLACK_QUEEN_SIDE;
    
+    ZHash::init();
 }
 
 Board::Board(   const std::string& fen,
@@ -142,8 +211,30 @@ Board::Board(   const std::string& fen,
     pos_end = fen.find(' ',pos_start);
 
     st.fullplyNumber = std::stoi(fen.substr(pos_start, pos_end - pos_start))*2 + (m_ColorToMove == BLACK ? 1 : 0);   
+    init_zobrist_key();
 }
 
+void Board::init_zobrist_key() {
+    m_ZobristKey = 0;
+    for (Square sq = S_FIRST; sq <= S_LAST; ++sq) {
+        Piece p = m_Board[sq];
+        if (p != NONE_PIECE) {
+            m_ZobristKey ^= ZHash::pph[get_piece_type(p)][sq];
+        }
+    }
+
+    if (m_ColorToMove == BLACK) {
+        m_ZobristKey ^= ZHash::blackTurn;
+    }
+
+    BoardState& st = m_StateHistory[m_StateHistoryIndex - 1];
+    m_ZobristKey ^= ZHash::castlingRights[st.castlingRights];
+
+    if (st.enpassant != EP_NONE) {
+        File ep_file = get_file(static_cast<Square>(st.enpassant));
+        m_ZobristKey ^= ZHash::enpassantFile[ep_file];
+    }
+}
 
 void Board::clear() {
 
@@ -203,6 +294,8 @@ std::string Board::get_board_info() const{
     }
     info += "Halfmove Clock: " + std::to_string(st.halfmoveClock) + "\n";
     info += "Fullmove Number: " + std::to_string(st.fullplyNumber) + "\n";
+
+    info += "Zobrist Key: " + std::to_string(m_ZobristKey) + "\n";
 
     return info;
 }
@@ -437,6 +530,8 @@ void Board::unsafe_do_move(const Move& m) {
                 BitBoard& occ_all_pieces = get_pieces_ref(~c, ALL_PIECES);
                 occ_cap_pieces &= ~get_mask(dest);
                 occ_all_pieces &= ~get_mask(dest);
+                
+                m_ZobristKey ^= ZHash::pph[captured_type][dest];
             }
 
 
@@ -463,9 +558,12 @@ void Board::unsafe_do_move(const Move& m) {
             }
 
             // Update castling rights if needed
-            if(st.castlingRights & (m_CastelingMask[start] | m_CastelingMask[dest])) {
+            //if(st.castlingRights & (m_CastelingMask[start] | m_CastelingMask[dest])) {
                 st.castlingRights = static_cast<Castling>(st.castlingRights & ~(m_CastelingMask[start] | m_CastelingMask[dest]));
-            }
+            //}
+
+            m_ZobristKey ^= ZHash::pph[moving_type][start];
+            m_ZobristKey ^= ZHash::pph[moving_type][dest];
 
         }else if(type == CASTLE)
         {
@@ -591,6 +689,8 @@ void Board::undo_move() {
                 occ_cap_pieces |= get_mask(dest);
                 BitBoard& occ_all_pieces = get_pieces_ref(c, ALL_PIECES);
                 occ_all_pieces |= get_mask(dest);
+
+                m_ZobristKey ^= ZHash::pph[captured_type][dest];
             }
 
             Piece moving_piece = get_piece_on(dest);
@@ -607,6 +707,9 @@ void Board::undo_move() {
             occ_all_pieces |= get_mask(start);
 
             update_occupancy();
+
+            m_ZobristKey ^= ZHash::pph[moving_type][start];
+            m_ZobristKey ^= ZHash::pph[moving_type][dest];
 
         }
             break;

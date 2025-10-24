@@ -18,7 +18,7 @@ inline void gen_promotions(BitBoard spot, MoveSaver* moves, Direction d){
     
 }
 
-void gen_moves_pawns(Board& b,GenMoveType type, BitBoard target, MoveSaver* moves){
+void gen_moves_pawns(const Board& b,GenMoveType type, BitBoard target, MoveSaver* moves){
     
     //BitBoard occ = b.get_pieces();
     Color c = b.get_color();
@@ -128,7 +128,7 @@ void gen_moves_pawns(Board& b,GenMoveType type, BitBoard target, MoveSaver* move
 };
 
 template<PieceType type>
-void gen_moves_general(Board& b, BitBoard target, MoveSaver* moves){
+void gen_moves_general(const Board& b, BitBoard target, MoveSaver* moves){
     BitBoard occ = b.get_pieces();
     Color c = b.get_color();
 
@@ -149,7 +149,7 @@ void gen_moves_general(Board& b, BitBoard target, MoveSaver* moves){
     }
 }
 
-void i_generate(Board& b , GenMoveType genType, MoveSaver* moves){
+void i_generate(const Board& b , GenMoveType genType, MoveSaver* moves){
     
     BitBoard target = (genType == CAPTURE) ? b.get_pieces(~b.get_color())
                     : (genType == STABLE)  ? ~b.get_pieces() 
@@ -181,7 +181,7 @@ void i_generate(Board& b , GenMoveType genType, MoveSaver* moves){
 }
 
 
-void generate_moves(Board& b, GenMoveType g, MoveSaver* moves){
+void generate_moves(const Board& b, const GenMoveType& g, MoveSaver* moves){
     assert(g != LEGAL);
     switch (g)
     {
@@ -199,7 +199,7 @@ void generate_moves(Board& b, GenMoveType g, MoveSaver* moves){
 }
 
 
-void generate_moves_legal(Board& b, MoveSaver* moves){
+void generate_moves_legal(Board b, MoveSaver* moves){
     MoveSaver pseudo_moves(b,ALL);
     for(const Move& m : pseudo_moves){
         if(b.is_legal(m)){

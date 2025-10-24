@@ -10,6 +10,9 @@ class Test {
 public:
     static void run_all();
 
+    static void random_path_integrity_test();
+    static void run_path_integrity_test(const std::string& fen,int num_moves);
+
     static void integrity_suite();
     static void run_integrity_test(const std::string& fen);
 
