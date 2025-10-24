@@ -82,6 +82,9 @@ public:
 
     void update_occupancy();
 
+
+    //this funcions relay on the m_Board array being correct and in the previous state,
+    //Modify The bitboard first then update m_Board accordingly
     inline void remove_piece_bb(Square sq){
         Piece p = get_piece_on(sq);
         Color c = get_color_of(p);
@@ -98,6 +101,8 @@ public:
         pieces |= get_mask(sq);
         m_Pieces[c] |= get_mask(sq);
     }
+
+
 
     //Returns Move::null() if invalid or illegal
     Move str_to_move(const std::string& str) const;

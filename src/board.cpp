@@ -466,24 +466,25 @@ void Board::do_castle(Castling side, bool undo) {
 
     // Move the king
     Piece king = get_piece_on(king_start);
+
+    remove_piece_bb(king_start);
+    put_piece_bb(king_end, king);
+
     m_Board[king_start] = NONE_PIECE;
     m_Board[king_end] = king;
 
-    m_Kings[c] &= ~get_mask(king_start);
-    m_Kings[c] |= get_mask(king_end);
-    m_Pieces[c] &= ~get_mask(king_start);
-    m_Pieces[c] |= get_mask(king_end);
+    
 
 
     // Move the rook
     Piece rook = get_piece_on(rook_start);
+
+    remove_piece_bb(rook_start);
+    put_piece_bb(rook_end, rook);
+
     m_Board[rook_start] = NONE_PIECE;
     m_Board[rook_end] = rook;
 
-    m_Rooks[c] &= ~get_mask(rook_start);
-    m_Rooks[c] |= get_mask(rook_end);
-    m_Pieces[c] &= ~get_mask(rook_start);
-    m_Pieces[c] |= get_mask(rook_end);
 
     update_occupancy();
     // Update castling rights
@@ -520,34 +521,27 @@ void Board::unsafe_do_move(const Move& m) {
     if(type ==NORMAL)
         {
             Piece dest_cap = get_piece_on(dest);
-            st.capturedPiece=dest_cap;
+
             if(dest_cap != NONE_PIECE){
                 st.halfmoveClock = 0;
+                st.capturedPiece=dest_cap;
 
-                PieceType captured_type = get_piece_type(dest_cap);
+                remove_piece_bb(dest);
 
-                BitBoard& occ_cap_pieces = get_pieces_ref(~c, captured_type);
-                BitBoard& occ_all_pieces = get_pieces_ref(~c, ALL_PIECES);
-                occ_cap_pieces &= ~get_mask(dest);
-                occ_all_pieces &= ~get_mask(dest);
-                
-                m_ZobristKey ^= ZHash::pph[captured_type][dest];
+                m_ZobristKey ^= ZHash::pph[get_piece_type(dest_cap)][dest];
             }
 
 
             Piece moving_piece = get_piece_on(start);
+            PieceType moving_type = get_piece_type(moving_piece);
+
+            remove_piece_bb(start);
+            put_piece_bb(dest, moving_piece);
+
             m_Board[start] = NONE_PIECE;
             m_Board[dest] = moving_piece;
 
-            PieceType moving_type = get_piece_type(moving_piece);
-
-            BitBoard& occ_moving_pieces = get_pieces_ref(c, moving_type);
-            BitBoard& occ_all_pieces = get_pieces_ref(c, ALL_PIECES);
-
-            occ_moving_pieces &= ~get_mask(start);
-            occ_moving_pieces |= get_mask(dest);
-            occ_all_pieces &= ~get_mask(start);
-            occ_all_pieces |= get_mask(dest);
+            
             update_occupancy();
 
             if(moving_type == PAWN){
@@ -557,11 +551,9 @@ void Board::unsafe_do_move(const Move& m) {
                 }
             }
 
-            // Update castling rights if needed
-            //if(st.castlingRights & (m_CastelingMask[start] | m_CastelingMask[dest])) {
-                st.castlingRights = static_cast<Castling>(st.castlingRights & ~(m_CastelingMask[start] | m_CastelingMask[dest]));
-            //}
-
+           
+            st.castlingRights = static_cast<Castling>(st.castlingRights & ~(m_CastelingMask[start] | m_CastelingMask[dest]));
+            
             m_ZobristKey ^= ZHash::pph[moving_type][start];
             m_ZobristKey ^= ZHash::pph[moving_type][dest];
 
@@ -578,60 +570,51 @@ void Board::unsafe_do_move(const Move& m) {
             assert(dest == static_cast<Square>(old_st.enpassant) && "En passant move to wrong square");
             // Move the pawn
             Piece pawn = get_piece_on(start);
-            m_Board[start] = NONE_PIECE;
-            m_Board[dest] = pawn;
-            m_Pawns[c] &= ~get_mask(start);
-            m_Pieces[c] &= ~get_mask(start);
-
-            m_Pawns[c] |= get_mask(dest);
-            m_Pieces[c] |= get_mask(dest);
-            // Remove the captured pawn
             Direction ep_capture_dir = (c == WHITE) ? SOUTH : NORTH;
             Square captured_sq = static_cast<Square>(dest + ep_capture_dir);
             Piece captured_pawn = get_piece_on(captured_sq);
+
+            remove_piece_bb(start);
+            put_piece_bb(dest, pawn);
+
+            m_Board[start] = NONE_PIECE;
+            m_Board[dest] = pawn;
+            
+            // Remove the captured pawn
+            remove_piece_bb(captured_sq);
             m_Board[captured_sq] = NONE_PIECE;
-            m_Pawns[~c] &= ~get_mask(captured_sq);
-            m_Pieces[~c] &= ~get_mask(captured_sq);
-            st.capturedPiece = captured_pawn;
-            st.halfmoveClock = 0; // reset halfmove clock on capture
-            // Clear en passant square
-            st.enpassant = EP_NONE;
+            
             update_occupancy();
+
+            st.capturedPiece = captured_pawn;
+            st.halfmoveClock = 0; 
+            st.enpassant = EP_NONE;
+            
         }
         else if(type ==PROMOTION)
         {
             Piece dest_cap = get_piece_on(dest);
-            st.capturedPiece=dest_cap;
-            st.halfmoveClock = 0;
+            
+            
             if(dest_cap != NONE_PIECE){
-                st.halfmoveClock = 0;
-                PieceType captured_type = get_piece_type(dest_cap);
-                BitBoard& occ_cap_pieces = get_pieces_ref(~c, captured_type);
-
-                BitBoard& occ_all_pieces = get_pieces_ref(~c, ALL_PIECES);
-
-
-                occ_cap_pieces &= ~get_mask(dest);
-                occ_all_pieces &= ~get_mask(dest);
+                st.capturedPiece=dest_cap;
+                remove_piece_bb(dest);
+                //m_ZobristKey ^= ZHash::pph[get_piece_type(dest_cap)][dest];
             }
             
 
             PieceType promo_type = m.get_promotion_piece();
             Piece promo_piece = make_piece(c, promo_type);
 
-            
+            remove_piece_bb(start);
+            put_piece_bb(dest, promo_piece);
+
             m_Board[start] = NONE_PIECE;
             m_Board[dest] = promo_piece;
 
-            m_Pawns[c] &= ~get_mask(start);
-            m_Pieces[c] &= ~get_mask(start);
-         
-            BitBoard& occ_prom = get_pieces_ref(c, promo_type);
-            occ_prom |= get_mask(dest);
-            m_Pieces[c] |= get_mask(dest);
-
             update_occupancy();
-            // Clear en passant square
+
+            st.halfmoveClock = 0;
         }
         m_ColorToMove = ~m_ColorToMove;
 }
@@ -682,29 +665,20 @@ void Board::undo_move() {
             Piece captured_piece = st.capturedPiece;
             
 
-            if(captured_piece != NONE_PIECE){
-                PieceType captured_type = get_piece_type(captured_piece);
-                Color c = ~m_ColorToMove; // color of the captured piece
-                BitBoard& occ_cap_pieces = get_pieces_ref(c, captured_type);
-                occ_cap_pieces |= get_mask(dest);
-                BitBoard& occ_all_pieces = get_pieces_ref(c, ALL_PIECES);
-                occ_all_pieces |= get_mask(dest);
-
-                m_ZobristKey ^= ZHash::pph[captured_type][dest];
+            if(captured_piece != NONE_PIECE){                
+                put_piece_bb(dest, captured_piece);
+                m_ZobristKey ^= ZHash::pph[get_piece_type(captured_piece)][dest];
             }
 
             Piece moving_piece = get_piece_on(dest);
-            m_Board[dest] = captured_piece;
-            m_Board[start] = moving_piece;
+            
 
             PieceType moving_type = get_piece_type(moving_piece);
-            Color c = m_ColorToMove; // color of the piece that moved
-            BitBoard& occ_moving_pieces = get_pieces_ref(c, moving_type);
-            BitBoard& occ_all_pieces = get_pieces_ref(c, ALL_PIECES);
-            occ_moving_pieces &= ~get_mask(dest);
-            occ_moving_pieces |= get_mask(start);
-            occ_all_pieces &= ~get_mask(dest);
-            occ_all_pieces |= get_mask(start);
+            remove_piece_bb(dest);
+            put_piece_bb(start, moving_piece);
+
+            m_Board[dest] = captured_piece;
+            m_Board[start] = moving_piece;
 
             update_occupancy();
 
@@ -724,22 +698,19 @@ void Board::undo_move() {
             // Move the pawn back
             Color c = m_ColorToMove; // color of the pawn that moved
             Piece pawn = get_piece_on(dest);
-            m_Board[dest] = NONE_PIECE;
-            m_Board[start] = pawn;
-            m_Pawns[c] &= ~get_mask(dest);
-            m_Pawns[c] |= get_mask(start);
-
-            m_Pieces[c] &= ~get_mask(dest);
-            m_Pieces[c] |= get_mask(start);
-            // Restore the captured pawn
             Piece captured_pawn = st.capturedPiece;
         
             Direction ep_capture_dir = (c == WHITE) ? SOUTH : NORTH;
             Square captured_sq = static_cast<Square>(dest + ep_capture_dir);
+
+            
+            remove_piece_bb(dest);
+            put_piece_bb(start, pawn);
+            put_piece_bb(captured_sq, captured_pawn);
+
+            m_Board[dest] = NONE_PIECE;
+            m_Board[start] = pawn;
             m_Board[captured_sq] = captured_pawn;
-            m_Pawns[~c] |= get_mask(captured_sq);
-            // Restore en passant square
-            m_Pieces[~c] |= get_mask(captured_sq);
             
             update_occupancy();
 
@@ -751,25 +722,16 @@ void Board::undo_move() {
             Color c = m_ColorToMove; // color of the pawn that moved
             Piece captured_piece = st.capturedPiece;
             
-
-            Piece promo_piece = get_piece_on(dest);
-            m_Board[dest] = captured_piece;
-            m_Board[start] = make_piece(c, PAWN);
-            m_Pawns[c] |= get_mask(start);
-            m_Pieces[c] |= get_mask(start);
+            put_piece_bb(start, make_piece(c, PAWN));
            
             if(captured_piece != NONE_PIECE) {
-                PieceType captured_type = get_piece_type(captured_piece);
-                BitBoard& occ_cap_pieces = get_pieces_ref(~c, captured_type);
-                occ_cap_pieces |= get_mask(dest);
-                BitBoard& occ_all_pieces = get_pieces_ref(~c, ALL_PIECES);
-                occ_all_pieces |= get_mask(dest);
+                put_piece_bb(dest, captured_piece);
             }
 
-            PieceType promo_type = get_piece_type(promo_piece);
-            BitBoard& occ_prom = get_pieces_ref(c, promo_type);
-            occ_prom &= ~get_mask(dest);
-            m_Pieces[c] &= ~get_mask(dest);
+            remove_piece_bb(dest);
+
+            m_Board[dest] = captured_piece;
+            m_Board[start] = make_piece(c, PAWN);
         
             // Restore en passant square
             update_occupancy();
