@@ -117,10 +117,79 @@ void Test::run_path_integrity_test(const std::string& fen, int num_moves){
     }
 }
 
+void Test::zobrist_suite(){
+    std::cout << "Running zobrist suite...\n";
+    int max_moves = 30;
+    int max_tests_per_fen = 30000;
+    for(const std::string& fen : fens){
+        for(int i = 0; i < max_tests_per_fen; ++i)
+            run_zobrist_test_random(fen,max_moves);
+
+        std::cout << "ok\n";
+    }
+    std::cout << "Zobrist suite completed.\n";
+}
+
+void Test::run_zobrist_test_random(const std::string& fen, int num_moves){
+    Board board(fen);
+    Key initial_key = board.get_key();
+
+    std::vector<Key> keys;
+    std::vector<Move> moves_made;
+
+    keys.push_back(initial_key);
+
+    for(int i=0; i < num_moves; ++i){
+        MoveSaver moves(board, LEGAL);
+        if(moves.is_empty()){
+            break; // no more legal moves
+        }
+        size_t move_index = rand() % moves.size();
+        Move m = moves[move_index];
+        board.do_move(m,true);
+
+        moves_made.push_back(m);
+        keys.push_back(board.get_key());
+
+        if(board.get_key() != board.gen_zobrist_key() ){
+            std::cout << "Zobrist test failed for FEN: " << fen << "\n";
+            std::cout << "After move: " << m.to_str() << "\n";  
+            std::cout << "Expected key: " << board.gen_zobrist_key() << "\n";
+            std::cout << "Got key: " << board.get_key() << "\n";
+
+            std::cout << "Moves made:\n";
+            for(const Move& mv : moves_made){
+                std::cout << mv.to_str() << " ";
+            }
+            std::cout << "\n";
+            return;
+        }
+    }
+
+    //undo moves
+    for(int i = moves_made.size() -1; i >=0; --i){
+        board.undo_move();
+        if(board.get_key() != keys[i]){
+            std::cout << "Zobrist test failed during undo for FEN: " << fen << "\n";
+            std::cout << "After undoing move: " << moves_made[i].to_str() << "\n";  
+            std::cout << "Expected key: " << keys[i] << "\n";
+            std::cout << "Got key: " << board.get_key() << "\n"; 
+            std::cout << "Moves made:\n";
+            for(const Move& mv : moves_made){
+                std::cout << mv.to_str() << " ";
+            }
+            std::cout << "\n";
+            return;
+        }
+    }
+
+}
+
 void Test::run_all(){
     std::cout << "Starting test suites...\n";
     integrity_suite();
     random_path_integrity_test();
+    zobrist_suite();
     perft_suite();
     std::cout << "All test suites completed.\n\n";
 }

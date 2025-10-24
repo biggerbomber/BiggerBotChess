@@ -43,6 +43,8 @@ int main() {
     Board::init();
     BB::init();
 
+
+
     Test::run_all();
 
     //UCIEngine engine;

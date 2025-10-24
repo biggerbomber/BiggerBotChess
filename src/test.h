@@ -16,6 +16,9 @@ public:
     static void integrity_suite();
     static void run_integrity_test(const std::string& fen);
 
+    static void zobrist_suite();
+    static void run_zobrist_test_random(const std::string& fen,int num_moves);
+
     static void perft_suite();
     static void perft_run(std::string fen, int depth, uint64_t expected_nodes);
 private:

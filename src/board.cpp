@@ -12,7 +12,7 @@ namespace ZHash
 Key pph[PIECE_NUM][S_NUM];
 Key blackTurn;
 Key castlingRights[16];
-Key enpassantFile[FILE_NUM]; 
+Key enpassantSquare[S_NUM]; 
 
 // xorshift64star Pseudo-Random Number Generator
 // This class is based on original code written and dedicated
@@ -67,8 +67,8 @@ void init(){
         ZHash::castlingRights[i] = prng.rand<Key>();
     }
 
-    for(int f = FILE_A; f <= FILE_H; ++f){
-        enpassantFile[f] = prng.rand<Key>();
+    for(int f = S_FIRST; f <= S_LAST; ++f){
+        enpassantSquare[f] = prng.rand<Key>();
     }
 
 }
@@ -211,29 +211,30 @@ Board::Board(   const std::string& fen,
     pos_end = fen.find(' ',pos_start);
 
     st.fullplyNumber = std::stoi(fen.substr(pos_start, pos_end - pos_start))*2 + (m_ColorToMove == BLACK ? 1 : 0);   
-    init_zobrist_key();
+    m_ZobristKey  = gen_zobrist_key();
 }
 
-void Board::init_zobrist_key() {
-    m_ZobristKey = 0;
+Key Board::gen_zobrist_key() const {
+    Key ZobristKey = 0;
     for (Square sq = S_FIRST; sq <= S_LAST; ++sq) {
         Piece p = m_Board[sq];
         if (p != NONE_PIECE) {
-            m_ZobristKey ^= ZHash::pph[get_piece_type(p)][sq];
+            ZobristKey ^= ZHash::pph[get_piece_type(p)][sq];
         }
     }
 
     if (m_ColorToMove == BLACK) {
-        m_ZobristKey ^= ZHash::blackTurn;
+        ZobristKey ^= ZHash::blackTurn;
     }
 
-    BoardState& st = m_StateHistory[m_StateHistoryIndex - 1];
-    m_ZobristKey ^= ZHash::castlingRights[st.castlingRights];
+    BoardState st = m_StateHistory[m_StateHistoryIndex - 1];
+    ZobristKey ^= ZHash::castlingRights[st.castlingRights];
 
-    if (st.enpassant != EP_NONE) {
-        File ep_file = get_file(static_cast<Square>(st.enpassant));
-        m_ZobristKey ^= ZHash::enpassantFile[ep_file];
-    }
+    
+    ZobristKey ^= ZHash::enpassantSquare[st.enpassant];
+    
+
+    return ZobristKey;
 }
 
 void Board::clear() {
@@ -473,6 +474,9 @@ void Board::do_castle(Castling side, bool undo) {
     m_Board[king_start] = NONE_PIECE;
     m_Board[king_end] = king;
 
+    m_ZobristKey ^= ZHash::pph[get_piece_type(king)][king_start];
+    m_ZobristKey ^= ZHash::pph[get_piece_type(king)][king_end];
+
     
 
 
@@ -485,8 +489,12 @@ void Board::do_castle(Castling side, bool undo) {
     m_Board[rook_start] = NONE_PIECE;
     m_Board[rook_end] = rook;
 
+    m_ZobristKey ^= ZHash::pph[get_piece_type(rook)][rook_start];
+    m_ZobristKey ^= ZHash::pph[get_piece_type(rook)][rook_end];
+
 
     update_occupancy();
+
     // Update castling rights
     if(!undo) {
         //m_CastlingRightsList[m_CastlingRightsListIndex++] = m_CastlingRights;
@@ -580,9 +588,14 @@ void Board::unsafe_do_move(const Move& m) {
             m_Board[start] = NONE_PIECE;
             m_Board[dest] = pawn;
             
+            m_ZobristKey ^= ZHash::pph[get_piece_type(pawn)][start];
+            m_ZobristKey ^= ZHash::pph[get_piece_type(pawn)][dest];
+            
             // Remove the captured pawn
             remove_piece_bb(captured_sq);
             m_Board[captured_sq] = NONE_PIECE;
+
+            m_ZobristKey ^= ZHash::pph[PAWN][captured_sq];
             
             update_occupancy();
 
@@ -599,7 +612,7 @@ void Board::unsafe_do_move(const Move& m) {
             if(dest_cap != NONE_PIECE){
                 st.capturedPiece=dest_cap;
                 remove_piece_bb(dest);
-                //m_ZobristKey ^= ZHash::pph[get_piece_type(dest_cap)][dest];
+                m_ZobristKey ^= ZHash::pph[get_piece_type(dest_cap)][dest];
             }
             
 
@@ -614,9 +627,21 @@ void Board::unsafe_do_move(const Move& m) {
 
             update_occupancy();
 
+            m_ZobristKey ^= ZHash::pph[PAWN][start];
+            m_ZobristKey ^= ZHash::pph[promo_type][dest];
+
             st.halfmoveClock = 0;
         }
+        //if(old_st.enpassant != EP_NONE)
+        m_ZobristKey ^= ZHash::enpassantSquare[old_st.enpassant];
+        //if(st.enpassant != EP_NONE)
+        m_ZobristKey ^= ZHash::enpassantSquare[st.enpassant];
+
+        m_ZobristKey ^= ZHash::castlingRights[old_st.castlingRights];
+        m_ZobristKey ^= ZHash::castlingRights[st.castlingRights];
+
         m_ColorToMove = ~m_ColorToMove;
+        m_ZobristKey ^= ZHash::blackTurn;
 }
     
    
@@ -650,7 +675,7 @@ void Board::undo_move() {
     assert((m_StateHistoryIndex > 1 ) && "No moves to undo");
 
     BoardState& st = m_StateHistory[m_StateHistoryIndex-1];
-    m_StateHistoryIndex--;
+    
     const Move& m =st.move;
     
     Square start = m.get_start();
@@ -708,11 +733,17 @@ void Board::undo_move() {
             put_piece_bb(start, pawn);
             put_piece_bb(captured_sq, captured_pawn);
 
+            
+
             m_Board[dest] = NONE_PIECE;
             m_Board[start] = pawn;
             m_Board[captured_sq] = captured_pawn;
             
             update_occupancy();
+
+            m_ZobristKey ^= ZHash::pph[get_piece_type(pawn)][dest];
+            m_ZobristKey ^= ZHash::pph[get_piece_type(pawn)][start];
+            m_ZobristKey ^= ZHash::pph[PAWN][captured_sq];
 
         }
             break;
@@ -726,6 +757,7 @@ void Board::undo_move() {
            
             if(captured_piece != NONE_PIECE) {
                 put_piece_bb(dest, captured_piece);
+                m_ZobristKey ^= ZHash::pph[get_piece_type(captured_piece)][dest];
             }
 
             remove_piece_bb(dest);
@@ -735,6 +767,9 @@ void Board::undo_move() {
         
             // Restore en passant square
             update_occupancy();
+            m_ZobristKey ^= ZHash::pph[PAWN][start];
+            PieceType promo_type = m.get_promotion_piece();
+            m_ZobristKey ^= ZHash::pph[promo_type][dest];
 
 
         }
@@ -745,6 +780,16 @@ void Board::undo_move() {
         }
     }
     update_occupancy();
+    m_StateHistoryIndex--;
+    BoardState& old_st = m_StateHistory[m_StateHistoryIndex-1];
+    
+    m_ZobristKey ^= ZHash::enpassantSquare[st.enpassant]; 
+    m_ZobristKey ^= ZHash::enpassantSquare[old_st.enpassant];
+
+    m_ZobristKey ^= ZHash::castlingRights[st.castlingRights];
+    m_ZobristKey ^= ZHash::castlingRights[old_st.castlingRights];
+
+    m_ZobristKey ^= ZHash::blackTurn;
     
 }
 

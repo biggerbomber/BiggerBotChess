@@ -9,8 +9,6 @@
 
 namespace BiggerBotChess {
 
-
-
 struct BoardState{
     Move move;
     Piece capturedPiece;
@@ -33,7 +31,7 @@ public:
             const std::string& moves = "");
 
     void clear();
-    void init_zobrist_key();
+    Key gen_zobrist_key() const;
 
     //General Info
     std::string get_board_info() const;
