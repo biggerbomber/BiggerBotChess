@@ -2095,3 +2095,29 @@ id name BiggerBotChess 0.1
 id author biggerbomber
 
 uciok
+uci
+id name BiggerBotChess 0.1
+id author biggerbomber
+
+uciok
+isready
+readyok
+position startpos
+go depth 6
+info score cp -295 depth 6 seldepth 10 multipv 1 nodes 3031 nps 1010333 hashfull 1 tbhits 0 time 3 pv d2d4
+bestmove d2d4
+uci
+id name BiggerBotChess 0.1
+id author biggerbomber
+
+uciok
+position startpos
+go depth 6
+info score cp -295 depth 6 pv d2d4
+bestmove d2d4
+go depth 7
+info score cp -245 depth 7 pv d2d4
+bestmove d2d4
+go depth 8
+info score cp -270 depth 8 pv d2d4
+bestmove d2d4

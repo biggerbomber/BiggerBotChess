@@ -115,7 +115,7 @@ void UCIEngine::handle_go(const std::string& command) {
         int depth;
         ss >> depth;
         Result best = search(m_Board, depth);
-        log_file << "info score cp "<<best.score<<" depth "<<depth<< " seldepth 10 multipv 1 nodes 3031 nps 1010333 hashfull 1 tbhits 0 time 3 pv "<<best.best_move.to_str()<<"\n";
+        log_file << "info score cp "<<best.score<<" depth "<<depth<< " pv "<<best.best_move.to_str()<<"\n";
         log_file << "bestmove " << best.best_move.to_str() << "\n";
         return;
     }
