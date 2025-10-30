@@ -10,22 +10,22 @@ class MyOut{
 public:
     std::ofstream log_file;
     MyOut(){
-        log_file.open("/home/barb/Desktop/Coding_progejcts/BiggerBotChess/out.lol", std::ios::app);
+        //log_file.open("/home/barb/Desktop/Coding_progejcts/BiggerBotChess/out.lol", std::ios::app);
     }
     ~MyOut(){
-        log_file.close();
+        //log_file.close();
     }
 
     void only_file(const std::string& data){
-        log_file << data;
-        log_file.flush();
+        //log_file << data;
+        //log_file.flush();
     }
 
     template<typename T>
     MyOut& operator<<(const T& data){
-        log_file << data;
+        //log_file << data;
         std::cout << data;
-        log_file.flush();
+        //log_file.flush();
         std::cout.flush();
         return *this;
     }
@@ -104,7 +104,7 @@ void UCIEngine::handle_position(const std::string& command) {
 }
 
 void UCIEngine::handle_go(const std::string& command) {
-    // For simplicity, we will just make a random legal move
+    
     if(command.substr(0, 2) != "go") return;
     
     std::stringstream ss(command);
@@ -119,8 +119,8 @@ void UCIEngine::handle_go(const std::string& command) {
         log_file << "bestmove " << best.best_move.to_str() << "\n";
         return;
     }
-    Result best = search(m_Board, 6); //search to depth 6   
-    log_file << "info score cp "<<best.score<<" depth 6"<< "\n";
+    Result best = search(m_Board, 6); //search to depth 6
+    log_file << "info score cp "<<best.score<<" depth 6 pv "<<best.best_move.to_str()<<"\n";
     log_file << "bestmove " << best.best_move.to_str() << "\n";
 }
 } // namespace BiggerBotChess
