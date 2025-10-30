@@ -47,10 +47,10 @@ int main() {
     BB::init();
     Eval::init();
     
-    //Test::full_challenge();
+    Test::full_challenge();
     //Test::run_all();
 
-    //Test::run_all();
+    Test::run_all();
 
     UCIEngine engine;
     engine.main_loop();
@@ -92,7 +92,7 @@ int main() {
     std::string save_pretty =  board.get_board_pretty();
     std::string save_pretty_bb =  board.get_board_pretty_bb();
 
-    std::cout<<board.m_StateHistoryIndex<<"\n";
+    std::cout<<board.m_State HistoryIndex<<"\n";
 
     MoveSaver moves(board, LEGAL);
     for(const Move& m : moves){

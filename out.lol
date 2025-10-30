@@ -2090,3 +2090,8 @@ bestmove f5c2
 isready
 readyok
 quit
+uci
+id name BiggerBotChess 0.1
+id author biggerbomber
+
+uciok

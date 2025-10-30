@@ -54,7 +54,7 @@ public:
 
     inline Piece get_piece_on(Square s) const { return m_Board[s];};
     inline Color get_color() const{ return m_ColorToMove;};
-    inline Enpassant get_enpassant() const { return m_StateHistory[m_StateHistoryIndex-1].enpassant;};
+    inline Enpassant get_enpassant() const { return m_StateHistory.back().enpassant;};
 
     inline Key get_key() const { return m_ZobristKey; }
 
@@ -67,7 +67,7 @@ public:
     bool is_legal(const Move& m); 
     bool is_in_check(Color c) const;
     bool is_draw() const{
-        BoardState st = m_StateHistory[m_StateHistoryIndex-1];
+        const BoardState& st = m_StateHistory.back();
         return (st.halfmoveClock >= 100);
     }
 
@@ -136,8 +136,8 @@ public:
 
     TT m_tt;
 
-    std::array<BoardState,256> m_StateHistory;
-    size_t m_StateHistoryIndex = 0;
+    std::deque<BoardState> m_StateHistory;
+    //size_t m_StateHi storyIndex = 0;
 };
 
 } // namespace BiggerBotChess

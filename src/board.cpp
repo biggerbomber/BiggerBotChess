@@ -99,7 +99,7 @@ Board::Board(   const std::string& fen,
                 const std::string& moves) {
     assert(moves == ""); // moves not implemented yet
     clear();
-    BoardState& st = m_StateHistory[m_StateHistoryIndex++];
+    BoardState& st = m_StateHistory.emplace_back();
     st.fullplyNumber= moves.size();
     
 
@@ -230,7 +230,7 @@ Key Board::gen_zobrist_key() const {
         ZobristKey ^= ZHash::blackTurn;
     }
 
-    BoardState st = m_StateHistory[m_StateHistoryIndex - 1];
+    const BoardState& st = m_StateHistory.back();
     ZobristKey ^= ZHash::castlingRights[st.castlingRights];
 
     
@@ -242,7 +242,6 @@ Key Board::gen_zobrist_key() const {
 
 void Board::clear() {
 
-    m_StateHistoryIndex = 0;
     memset(m_Board, NONE_PIECE, sizeof(m_Board));
    
     m_Occupancy = 0;
@@ -256,10 +255,12 @@ void Board::clear() {
         m_Kings[i] = 0;
     }
     m_ColorToMove = WHITE;
+    m_StateHistory.clear();
+
 }
 
 std::string Board::get_board_info() const{
-    BoardState st = m_StateHistory[m_StateHistoryIndex-1];
+    BoardState st = m_StateHistory.back();
     std::string info;
     info += "Board Info:\n";
     info += "Occupancy:\n" + print_bitboard(m_Occupancy) + "\n";
@@ -399,7 +400,7 @@ std::string Board::get_board_pretty_bb() const {
 
 
 bool Board::is_castle_possible(Color c, Castling side) const{
-    const BoardState& st = m_StateHistory[m_StateHistoryIndex-1];
+    const BoardState& st = m_StateHistory.back();
     assert(side == KING_SIDE || side == QUEEN_SIDE);
 
     side = static_cast<Castling>(side << (c * 2)); // shift side to the correct color
@@ -440,8 +441,8 @@ bool Board::is_castle_possible(Color c, Castling side) const{
 }
 
 void Board::do_castle(Castling side, bool undo) {
-    BoardState& st_old = m_StateHistory[m_StateHistoryIndex-2];
-    BoardState& st = m_StateHistory[m_StateHistoryIndex-1];
+    BoardState& st_old = m_StateHistory[m_StateHistory.size()-2];
+    BoardState& st = m_StateHistory.back();
     Color c = get_color();
     
     Castling full_side = static_cast<Castling>(side << (c * 2)); 
@@ -559,13 +560,13 @@ bool Board::is_pseudo_legal(const Move& m) {
 }
 
 void Board::unsafe_do_move(const Move& m) {
-    assert(m_StateHistoryIndex > 0 && "No board state to copy from");
+    assert(m_StateHistory.size() > 0 && "No board state to copy from");
     Square start = m.get_start();
     Square dest = m.get_dest();
     MoveType type = m.get_type();
     Color c = get_color();
-    BoardState& old_st = m_StateHistory[m_StateHistoryIndex-1];
-    BoardState& st = m_StateHistory[m_StateHistoryIndex++];
+    BoardState& old_st = m_StateHistory.back();
+    BoardState& st = m_StateHistory.emplace_back();
 
     // copy old state
     st.move = m;
@@ -721,9 +722,9 @@ bool Board::do_move(const Move& m, bool trust_legal) {
 }
 
 void Board::undo_move() {
-    assert((m_StateHistoryIndex > 1 ) && "No moves to undo");
+    assert((m_StateHistory.size() > 1 ) && "No moves to undo");
 
-    BoardState& st = m_StateHistory[m_StateHistoryIndex-1];
+    BoardState& st = m_StateHistory.back();
     
     const Move& m =st.move;
     
@@ -829,8 +830,9 @@ void Board::undo_move() {
         }
     }
     update_occupancy();
-    m_StateHistoryIndex--;
-    BoardState& old_st = m_StateHistory[m_StateHistoryIndex-1];
+
+    m_StateHistory.pop_back();
+    BoardState& old_st = m_StateHistory.back();
     
     m_ZobristKey ^= ZHash::enpassantSquare[st.enpassant]; 
     m_ZobristKey ^= ZHash::enpassantSquare[old_st.enpassant];
