@@ -9,7 +9,7 @@ namespace BiggerBotChess {
 namespace ZHash
 {
 
-Key pph[PIECE_NUM][S_NUM];
+Key pph[PIECE_TOT_NUM][S_NUM];
 Key blackTurn;
 Key castlingRights[16];
 Key enpassantSquare[S_NUM]; 
@@ -55,8 +55,8 @@ void init(){
 
     //initialize zobrist hash keys
     PRNG prng(0xF00DDEADBEEFCAFE);
-    for(int p = PAWN; p < PIECE_NUM; ++p){
-        for(Square s = S_FIRST; s < S_LAST; ++s){
+    for(int p = PAWN; p < PIECE_TOT_NUM; ++p){
+        for(Square s = S_FIRST; s <= S_LAST; ++s){
             pph[p][s] = prng.rand<Key>();
         }
     }
@@ -92,6 +92,7 @@ void Board::init() {
     m_CastelingMask[S_A8] = BLACK_QUEEN_SIDE;
    
     ZHash::init();
+
 }
 
 Board::Board(   const std::string& fen,
@@ -212,6 +213,8 @@ Board::Board(   const std::string& fen,
 
     st.fullplyNumber = std::stoi(fen.substr(pos_start, pos_end - pos_start))*2 + (m_ColorToMove == BLACK ? 1 : 0);   
     m_ZobristKey  = gen_zobrist_key();
+
+    m_tt.init();
 }
 
 Key Board::gen_zobrist_key() const {
@@ -219,7 +222,7 @@ Key Board::gen_zobrist_key() const {
     for (Square sq = S_FIRST; sq <= S_LAST; ++sq) {
         Piece p = m_Board[sq];
         if (p != NONE_PIECE) {
-            ZobristKey ^= ZHash::pph[get_piece_type(p)][sq];
+            ZobristKey ^= ZHash::pph[p][sq];
         }
     }
 
@@ -274,6 +277,12 @@ std::string Board::get_board_info() const{
     info += "Black Queens:\n" + print_bitboard(m_Queens[BLACK]) + "\n";
     info += "White Kings:\n" + print_bitboard(m_Kings[WHITE]) + "\n";
     info += "Black Kings:\n" + print_bitboard(m_Kings[BLACK]) + "\n";
+
+
+    info += "Board Representation: (Bitboards)\n";
+    info += get_board_pretty_bb() + "\n";
+    info += "Board Representation: (Array)\n";
+    info += get_board_pretty() + "\n";
 
     info += "Color to move: " + std::string((m_ColorToMove == WHITE) ? "White" : "Black") + "\n";
 
@@ -474,8 +483,8 @@ void Board::do_castle(Castling side, bool undo) {
     m_Board[king_start] = NONE_PIECE;
     m_Board[king_end] = king;
 
-    m_ZobristKey ^= ZHash::pph[get_piece_type(king)][king_start];
-    m_ZobristKey ^= ZHash::pph[get_piece_type(king)][king_end];
+    m_ZobristKey ^= ZHash::pph[king][king_start];
+    m_ZobristKey ^= ZHash::pph[king][king_end];
 
     
 
@@ -489,8 +498,8 @@ void Board::do_castle(Castling side, bool undo) {
     m_Board[rook_start] = NONE_PIECE;
     m_Board[rook_end] = rook;
 
-    m_ZobristKey ^= ZHash::pph[get_piece_type(rook)][rook_start];
-    m_ZobristKey ^= ZHash::pph[get_piece_type(rook)][rook_end];
+    m_ZobristKey ^= ZHash::pph[rook][rook_start];
+    m_ZobristKey ^= ZHash::pph[rook][rook_end];
 
 
     update_occupancy();
@@ -506,10 +515,50 @@ void Board::do_castle(Castling side, bool undo) {
     }
 }
 
+//Work in progress
+bool Board::is_pseudo_legal(const Move& m) {
+    Square start = m.get_start();
+    Square dest = m.get_dest();
+    MoveType type = m.get_type();
+    Color c = get_color();
+    Piece moving_piece = get_piece_on(start);
+    PieceType moving_type = get_piece_type(moving_piece);
+    Piece dest_piece = get_piece_on(dest);
+
+
+    if(moving_piece == NONE_PIECE || get_color_of(moving_piece) != c) {
+        assert(false && "Moving piece is invalid or does not belong to the player to move");
+    }
+
+    if(type == NORMAL) {
+        // Destination square occupied by friendly piece
+        if(dest_piece != NONE_PIECE && get_color_of(dest_piece) == c) {
+            std::cout << "Move from " << square_to_str(start) << " to " << square_to_str(dest) << " is not pseudo-legal: destination occupied by friendly piece\n";
+            std::cout << get_board_info() << "\n";
+            assert(false && "Destination square occupied by friendly piece");
+        }
+        if(get_piece_type(moving_piece) != PAWN){
+            BitBoard possible_moves = BB::get_attacks(start, moving_type, m_Pieces[c]);
+            if(!(possible_moves & get_mask(dest))) {
+                std::cout << "Possible moves:\n" << print_bitboard(possible_moves) << "\n";
+                std::cout << "Move from " << square_to_str(start) << " to " << square_to_str(dest) << " is not pseudo-legal for piece type " << moving_type << "\n";
+                std::cout << get_board_info() << "\n";
+                assert(false && "Destination square not reachable by moving piece");
+           }
+        }
+        return true;
+    }
+
+    if(type == CASTLE) {
+        Castling side = (dest > start) ? KING_SIDE : QUEEN_SIDE;
+        return is_castle_possible(c, side);
+    }
+
+
+    return true; 
+}
 
 void Board::unsafe_do_move(const Move& m) {
-
-
     assert(m_StateHistoryIndex > 0 && "No board state to copy from");
     Square start = m.get_start();
     Square dest = m.get_dest();
@@ -536,7 +585,7 @@ void Board::unsafe_do_move(const Move& m) {
 
                 remove_piece_bb(dest);
 
-                m_ZobristKey ^= ZHash::pph[get_piece_type(dest_cap)][dest];
+                m_ZobristKey ^= ZHash::pph[dest_cap][dest];
             }
 
 
@@ -562,8 +611,8 @@ void Board::unsafe_do_move(const Move& m) {
            
             st.castlingRights = static_cast<Castling>(st.castlingRights & ~(m_CastelingMask[start] | m_CastelingMask[dest]));
             
-            m_ZobristKey ^= ZHash::pph[moving_type][start];
-            m_ZobristKey ^= ZHash::pph[moving_type][dest];
+            m_ZobristKey ^= ZHash::pph[moving_piece][start];
+            m_ZobristKey ^= ZHash::pph[moving_piece][dest];
 
         }else if(type == CASTLE)
         {
@@ -588,14 +637,14 @@ void Board::unsafe_do_move(const Move& m) {
             m_Board[start] = NONE_PIECE;
             m_Board[dest] = pawn;
             
-            m_ZobristKey ^= ZHash::pph[get_piece_type(pawn)][start];
-            m_ZobristKey ^= ZHash::pph[get_piece_type(pawn)][dest];
+            m_ZobristKey ^= ZHash::pph[pawn][start];
+            m_ZobristKey ^= ZHash::pph[pawn][dest];
             
             // Remove the captured pawn
             remove_piece_bb(captured_sq);
             m_Board[captured_sq] = NONE_PIECE;
 
-            m_ZobristKey ^= ZHash::pph[PAWN][captured_sq];
+            m_ZobristKey ^= ZHash::pph[captured_pawn][captured_sq];
             
             update_occupancy();
 
@@ -607,12 +656,12 @@ void Board::unsafe_do_move(const Move& m) {
         else if(type ==PROMOTION)
         {
             Piece dest_cap = get_piece_on(dest);
-            
+            Piece start_piece = get_piece_on(start);
             
             if(dest_cap != NONE_PIECE){
                 st.capturedPiece=dest_cap;
                 remove_piece_bb(dest);
-                m_ZobristKey ^= ZHash::pph[get_piece_type(dest_cap)][dest];
+                m_ZobristKey ^= ZHash::pph[dest_cap][dest];
             }
             
 
@@ -627,8 +676,8 @@ void Board::unsafe_do_move(const Move& m) {
 
             update_occupancy();
 
-            m_ZobristKey ^= ZHash::pph[PAWN][start];
-            m_ZobristKey ^= ZHash::pph[promo_type][dest];
+            m_ZobristKey ^= ZHash::pph[start_piece][start];
+            m_ZobristKey ^= ZHash::pph[promo_piece][dest];
 
             st.halfmoveClock = 0;
         }
@@ -692,13 +741,13 @@ void Board::undo_move() {
 
             if(captured_piece != NONE_PIECE){                
                 put_piece_bb(dest, captured_piece);
-                m_ZobristKey ^= ZHash::pph[get_piece_type(captured_piece)][dest];
+                m_ZobristKey ^= ZHash::pph[captured_piece][dest];
             }
 
             Piece moving_piece = get_piece_on(dest);
             
 
-            PieceType moving_type = get_piece_type(moving_piece);
+            //PieceType moving_type = get_piece_type(moving_piece);
             remove_piece_bb(dest);
             put_piece_bb(start, moving_piece);
 
@@ -707,8 +756,8 @@ void Board::undo_move() {
 
             update_occupancy();
 
-            m_ZobristKey ^= ZHash::pph[moving_type][start];
-            m_ZobristKey ^= ZHash::pph[moving_type][dest];
+            m_ZobristKey ^= ZHash::pph[moving_piece][start];
+            m_ZobristKey ^= ZHash::pph[moving_piece][dest];
 
         }
             break;
@@ -741,9 +790,9 @@ void Board::undo_move() {
             
             update_occupancy();
 
-            m_ZobristKey ^= ZHash::pph[get_piece_type(pawn)][dest];
-            m_ZobristKey ^= ZHash::pph[get_piece_type(pawn)][start];
-            m_ZobristKey ^= ZHash::pph[PAWN][captured_sq];
+            m_ZobristKey ^= ZHash::pph[pawn][dest];
+            m_ZobristKey ^= ZHash::pph[pawn][start];
+            m_ZobristKey ^= ZHash::pph[captured_pawn][captured_sq];
 
         }
             break;
@@ -757,7 +806,7 @@ void Board::undo_move() {
            
             if(captured_piece != NONE_PIECE) {
                 put_piece_bb(dest, captured_piece);
-                m_ZobristKey ^= ZHash::pph[get_piece_type(captured_piece)][dest];
+                m_ZobristKey ^= ZHash::pph[captured_piece][dest];
             }
 
             remove_piece_bb(dest);
@@ -767,9 +816,9 @@ void Board::undo_move() {
         
             // Restore en passant square
             update_occupancy();
-            m_ZobristKey ^= ZHash::pph[PAWN][start];
-            PieceType promo_type = m.get_promotion_piece();
-            m_ZobristKey ^= ZHash::pph[promo_type][dest];
+            m_ZobristKey ^= ZHash::pph[m_Board[start]][start];
+            Piece promo_piece = make_piece(c, m.get_promotion_piece());
+            m_ZobristKey ^= ZHash::pph[promo_piece][dest];
 
 
         }
@@ -790,7 +839,6 @@ void Board::undo_move() {
     m_ZobristKey ^= ZHash::castlingRights[old_st.castlingRights];
 
     m_ZobristKey ^= ZHash::blackTurn;
-    
 }
 
 void Board::sanity_check(){
@@ -806,9 +854,38 @@ void Board::sanity_check(){
                         | m_Rooks[WHITE]
                         | m_Queens[WHITE]
                         | m_Kings[WHITE];
-    assert(Pieces_Black == m_Pieces[BLACK] && "Black pieces bitboard mismatch");
-    assert(Pieces_White == m_Pieces[WHITE] && "White pieces bitboard mismatch");
-    assert((Pieces_Black & Pieces_White) == 0 && "Black and White pieces overlap");
+
+    if(Pieces_Black != m_Pieces[BLACK]) {
+        std::cerr << "Black pieces bitboard mismatch" << std::endl;
+
+        std::cerr << "Calculated:\n" << print_bitboard(Pieces_Black) << std::endl;
+        std::cerr << "Stored:\n" << print_bitboard(m_Pieces[BLACK]) << std::endl;
+
+        std::cerr << "Difference:\n" << print_bitboard(Pieces_Black ^ m_Pieces[BLACK]) << std::endl;
+
+        std::cerr << get_board_info() << std::endl;
+        assert(false && "Black pieces bitboard mismatch");
+    }
+
+
+    if(Pieces_White != m_Pieces[WHITE]) {
+        std::cerr << "White pieces bitboard mismatch" << std::endl;
+
+        std::cerr << "Calculated:\n" << print_bitboard(Pieces_White) << std::endl;
+        std::cerr << "Stored:\n" << print_bitboard(m_Pieces[WHITE]) << std::endl;
+
+        std::cerr << "Difference:\n" << print_bitboard(Pieces_White ^ m_Pieces[WHITE]) << std::endl;
+
+        std::cerr << get_board_info() << std::endl;
+        assert(false && "White pieces bitboard mismatch");
+    }
+
+    if((Pieces_Black & Pieces_White) != 0) {
+        std::cerr << "Black and White pieces bitboards overlap" << std::endl;
+        std::cerr << "Overlap:\n" << print_bitboard(Pieces_Black & Pieces_White) << std::endl;
+        std::cerr << get_board_info() << std::endl;
+        assert(false && "Black and White pieces bitboards overlap");
+    }
 
     for(PieceType pt = PAWN; pt <= KING; pt = static_cast<PieceType>(pt + 1)) {
         for(PieceType pt2 = PAWN; pt2 <= KING; pt2 = static_cast<PieceType>(pt2 + 1)) {
@@ -846,11 +923,27 @@ void Board::sanity_check(){
         }
     }
 
-}
+    if(gen_zobrist_key() != m_ZobristKey) {
+        std::cerr << "Zobrist key mismatch!" << std::endl;
+        std::cerr << "Calculated: " << gen_zobrist_key() << std::endl;
+        std::cerr << "Stored:     " << m_ZobristKey << std::endl;
+        std::cerr << get_board_info() << std::endl;
+        assert(false && "Zobrist key mismatch");
+    }
 
+}
+ 
 void Board::update_occupancy() {
     m_Occupancy = m_Pieces[WHITE] | m_Pieces[BLACK];
 }
+
+
+bool Board::is_in_check(Color c) const {
+    Square king_sq = lsb(m_Kings[c]);
+    Color opponent = (c == WHITE) ? BLACK : WHITE;
+    return is_square_attacked(king_sq, opponent);
+}
+
 
 //this funcion uses the vector m_Board to print the board
 std::string Board::get_board_pretty() const {
@@ -892,7 +985,7 @@ std::string Board::get_board_pretty() const {
     return board_str;
 }
 
-Move Board::str_to_move(const std::string& move_str) const {
+Move Board::str_to_move(const std::string& move_str) {
     //regex to match move strings 
     std::regex move_regex("([a-h][1-8])([a-h][1-8])([nbrq])?");
     std::smatch sm;

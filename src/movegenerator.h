@@ -18,16 +18,26 @@ enum GenMoveType{
 };
 
 void generate_moves(const Board&, const GenMoveType&, MoveSaver*);
-void generate_moves_legal(Board, MoveSaver*);
+void generate_moves_legal(Board&, MoveSaver*);
 
 
 class MoveSaver{
 public:
-    MoveSaver(const Board& b, const GenMoveType& ty){
+    MoveSaver(Board& b,const GenMoveType& ty, Move ttMove = Move::null()){
+        m_Start = 0;
+        if(!(ttMove == Move::null())){
+            m_data[m_free_pos++] = ttMove;
+            m_Start = 1;
+        }
+
+        m_Board = &b;
         if(ty==LEGAL){
             generate_moves_legal(b,this);
         } else {
             generate_moves(b,ty,this);
+            if(ty == CAPTURE || ty == ALL){
+                order_capture();
+            }
         }
     }
 
@@ -46,9 +56,14 @@ public:
         return m_data[index];
     }
 
+    void order_capture();
+
     size_t size() const { return m_free_pos;}
     bool is_empty() {return size()==0;}
 
+    const Board* m_Board;
+    uint16_t m_Start = 0;
+    uint16_t m_CaptureSize = 0;
     uint16_t m_free_pos = 0;
     Move m_data[MAX_MOVES];
 };

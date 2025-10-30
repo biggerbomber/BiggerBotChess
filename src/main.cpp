@@ -6,19 +6,22 @@
 #include <algorithm>
 #include <chrono>
 #include "test.h"
+#include "eval.h"
+
+#include "tt.h"
 using namespace BiggerBotChess;
 
 uint64_t perft(Board& board, int depth) {
     if (depth == 0) return 1;
 
-    MoveSaver moves(board, LEGAL);
+    MoveSaver moves(board, ALL);
     if (moves.is_empty()) return 0;
-    if (depth == 1 ) return moves.size();   
+    //if (depth == 1 ) return moves.size();   
 
     uint64_t nodes = 0;
     for (const Move& move : moves) {
         
-        if(!board.do_move(move,true)){
+        if(!board.do_move(move,false)){
             continue;
         }
 
@@ -37,20 +40,22 @@ uint64_t perft(Board& board, int depth) {
 int main() {
     
 
-    std::cout << "Hello! I am BiggerBotChess!" << std::endl;
+    //std::cout << "Hello! I am BiggerBotChess!" << std::endl;
     
 
     Board::init();
     BB::init();
+    Eval::init();
+    
+    //Test::full_challenge();
+    //Test::run_all();
 
+    //Test::run_all();
 
+    UCIEngine engine;
+    engine.main_loop();
 
-    Test::run_all();
-
-    //UCIEngine engine;
-    //engine.main_loop();
-
-    Board b;
+    /*Board b;
     std::cout <<"started perft test\n";
    // std::cin.get();
     //time it 
@@ -75,7 +80,7 @@ int main() {
     
     std::cout <<"finished perft test\n";
 
-    
+    */
 
 
     //Perft test

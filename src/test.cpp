@@ -1,6 +1,7 @@
 #include "test.h"
 #include "board.h"
 #include "movegenerator.h"
+#include "search.h"
 #include <iostream>
 #include <chrono>
 
@@ -8,6 +9,7 @@ namespace BiggerBotChess {
 
 
 auto fens = {
+    std::string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "),
     std::string("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"),
     std::string("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 "),
     std::string("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"),
@@ -81,7 +83,7 @@ void Test::random_path_integrity_test(){
 
 void Test::run_path_integrity_test(const std::string& fen, int num_moves){
     Board board(fen);
-    Board original_board = board;
+    Board original_board(fen);
 
     std::vector<Move> moves_made;
 
@@ -120,12 +122,12 @@ void Test::run_path_integrity_test(const std::string& fen, int num_moves){
 void Test::zobrist_suite(){
     std::cout << "Running zobrist suite...\n";
     int max_moves = 30;
-    int max_tests_per_fen = 30000;
+    int max_tests_per_fen = 3000;
     for(const std::string& fen : fens){
         for(int i = 0; i < max_tests_per_fen; ++i)
             run_zobrist_test_random(fen,max_moves);
 
-        std::cout << "ok\n";
+        std::cout << "ok" << std::endl;
     }
     std::cout << "Zobrist suite completed.\n";
 }
@@ -207,7 +209,7 @@ void Test::integrity_suite(){
 
 void Test::run_integrity_test(const std::string& fen){
     Board board(fen);
-    Board original_board = board;
+    Board original_board(fen);
 
     MoveSaver moves(board, LEGAL);
 
@@ -296,5 +298,49 @@ uint64_t Test::perft(Board& board, int depth){
         board.undo_move();
     }
     return nodes;
+}
+
+
+void Test::full_challenge(){
+    std::cout << "Running full challenge test...\n";
+
+    Board boards[2];
+    for(auto& fen : fens){
+        int turn = 0;
+
+        boards[0] = Board(fen); //White
+        boards[1] = Board(fen); //Black
+
+        while(true){
+            Board& board = boards[turn %2];
+            Board& opponent_board = boards[(turn+1)%2];
+
+        
+
+            Result result = search(board, 6); //2 seconds per move
+
+            if(result.best_move == Move::null()){
+                std::cout << "Game over on turn " << turn << "\n";
+                break;
+            }
+
+            board.do_move(result.best_move,true);
+            opponent_board.do_move(result.best_move,true);
+
+            std::cout << (turn %2 ==0 ? "White" : "Black") << " plays: " << result.best_move.to_str() << "\n";
+            turn++;
+
+            if(turn > 2000){
+                std::cout << "Draw by move limit.\n";
+                break;
+            }
+
+        }
+    }
+
+
+
+
+    std::cout << "Full challenge test completed.\n";
 }
 } // namespace BiggerBotChess

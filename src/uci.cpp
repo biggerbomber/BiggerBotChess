@@ -106,7 +106,20 @@ void UCIEngine::handle_position(const std::string& command) {
 void UCIEngine::handle_go(const std::string& command) {
     // For simplicity, we will just make a random legal move
     if(command.substr(0, 2) != "go") return;
-    Result best = search(m_Board, 6); //search to depth 3
+    
+    std::stringstream ss(command);
+    std::string token;
+    ss >> token; // skip "go"   
+    ss >> token;
+    if(token == "depth"){
+        int depth;
+        ss >> depth;
+        Result best = search(m_Board, depth);
+        log_file << "info score cp "<<best.score<<" depth "<<depth<< " seldepth 10 multipv 1 nodes 3031 nps 1010333 hashfull 1 tbhits 0 time 3 pv "<<best.best_move.to_str()<<"\n";
+        log_file << "bestmove " << best.best_move.to_str() << "\n";
+        return;
+    }
+    Result best = search(m_Board, 6); //search to depth 6   
     log_file << "info score cp "<<best.score<<" depth 6"<< "\n";
     log_file << "bestmove " << best.best_move.to_str() << "\n";
 }

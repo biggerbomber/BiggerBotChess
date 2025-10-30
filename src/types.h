@@ -163,7 +163,7 @@ enum PieceType {
     PIECE_NUM = ALL_PIECES
 };
 
-constexpr uint8_t BLACK_PIECE_OFFSET = 7; 
+constexpr uint8_t BLACK_PIECE_OFFSET = 3; 
 
 enum Piece {
     NONE_PIECE,
@@ -178,7 +178,8 @@ enum Piece {
     B_BISHOP,
     B_ROOK,
     B_QUEEN,
-    B_KING
+    B_KING,
+    PIECE_TOT_NUM
 };
 
 inline PieceType get_piece_type(Piece p){
@@ -192,5 +193,9 @@ inline Color get_color_of(Piece p){
 
 
 using Key = uint64_t;
+
+inline int count_bits(uint64_t b){
+    return __builtin_popcountll(b);
+}
 
 }// namespace BiggerBotChess

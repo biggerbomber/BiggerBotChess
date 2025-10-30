@@ -70,7 +70,7 @@ inline BitBoard shift_bb(BitBoard b , Direction d){
     return 0;
 }
 
-inline Square lsb(BitBoard& b){
+inline Square lsb(const BitBoard& b){
     assert(b != 0);
     return static_cast<Square>(__builtin_ctzll(b));
 }

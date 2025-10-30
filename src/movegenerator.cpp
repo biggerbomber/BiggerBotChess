@@ -188,6 +188,9 @@ void generate_moves(const Board& b, const GenMoveType& g, MoveSaver* moves){
     case CAPTURE:   
     case STABLE:
         i_generate(b,g,moves);
+        if(g == CAPTURE){
+            moves->m_CaptureSize = moves->m_free_pos;
+        }
         break;
     case ALL:
         generate_moves(b,CAPTURE,moves);
@@ -199,7 +202,7 @@ void generate_moves(const Board& b, const GenMoveType& g, MoveSaver* moves){
 }
 
 
-void generate_moves_legal(Board b, MoveSaver* moves){
+void generate_moves_legal(Board& b, MoveSaver* moves){
     MoveSaver pseudo_moves(b,ALL);
     for(const Move& m : pseudo_moves){
         if(b.is_legal(m)){
@@ -208,5 +211,26 @@ void generate_moves_legal(Board b, MoveSaver* moves){
     }
 }
 
+
+void MoveSaver::order_capture(){
+    if(m_CaptureSize == 0 || m_CaptureSize >= m_free_pos){
+        return;
+    }
+    std::sort(&m_data[m_Start], &m_data[m_CaptureSize], [this](const Move& lhs, const Move& rhs){
+        const Board &b = *(this->m_Board);
+
+        if(lhs.get_dest() != rhs.get_dest()){
+            PieceType pt_lhs = get_piece_type(b.get_piece_on(lhs.get_dest()));
+            PieceType pt_rhs = get_piece_type(b.get_piece_on(rhs.get_dest()));
+
+            return pt_lhs > pt_rhs;
+        }
+
+        PieceType pt_lhs = get_piece_type(b.get_piece_on(lhs.get_start()));
+        PieceType pt_rhs = get_piece_type(b.get_piece_on(rhs.get_start()));
+        return pt_lhs < pt_rhs; 
+    });
+
+}
 
 }

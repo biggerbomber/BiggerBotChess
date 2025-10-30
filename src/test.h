@@ -21,6 +21,9 @@ public:
 
     static void perft_suite();
     static void perft_run(std::string fen, int depth, uint64_t expected_nodes);
+
+
+    static void full_challenge();
 private:
     static uint64_t perft(Board& board, int depth);
 };

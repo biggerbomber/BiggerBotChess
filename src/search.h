@@ -2,11 +2,14 @@
 
 #include "move.h"
 #include "board.h"
+#include "eval.h"
+#include "tt.h"
 
 namespace BiggerBotChess {
+using namespace Eval;
 struct Result{
     Move best_move = Move::null();
-    int score = 0;
+    Evaluation score = 0;
 };
 
 

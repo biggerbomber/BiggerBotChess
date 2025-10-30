@@ -2,6 +2,7 @@
 #include "types.h"
 #include "move.h"
 #include "bitboard.h"
+#include "tt.h"
 #include <vector>
 #include <iostream>
 #include <regex>
@@ -29,6 +30,8 @@ public:
 
     Board(  const std::string& fen = START_FEN,
             const std::string& moves = "");
+
+    Board(const Board& other) = delete;
 
     void clear();
     Key gen_zobrist_key() const;
@@ -60,7 +63,13 @@ public:
 
 
     bool is_square_attacked(Square s, Color by) const;
+    bool is_pseudo_legal(const Move& m);
     bool is_legal(const Move& m); 
+    bool is_in_check(Color c) const;
+    bool is_draw() const{
+        BoardState st = m_StateHistory[m_StateHistoryIndex-1];
+        return (st.halfmoveClock >= 100);
+    }
 
     //for debugging, if the board is in a invalid state it will assert
     void sanity_check();
@@ -79,6 +88,8 @@ public:
     void do_castle( Castling side, bool undo = false);
 
     void update_occupancy();
+
+
 
 
     //this funcions relay on the m_Board array being correct and in the previous state,
@@ -100,16 +111,14 @@ public:
         m_Pieces[c] |= get_mask(sq);
     }
 
-
+    
 
     //Returns Move::null() if invalid or illegal
-    Move str_to_move(const std::string& str) const;
+    Move str_to_move(const std::string& str);
 
     Color m_ColorToMove = WHITE;
     
-    // Castling rights
-    std::array<BoardState,256> m_StateHistory;
-    size_t m_StateHistoryIndex = 0;
+    
     Piece m_Board [S_NUM];
     BitBoard m_Occupancy = {0};
     BitBoard m_Buffers[COLOR_NUM] = {0};
@@ -124,8 +133,11 @@ public:
     //helper
 
     Key m_ZobristKey = 0;
-    
-    
+
+    TT m_tt;
+
+    std::array<BoardState,256> m_StateHistory;
+    size_t m_StateHistoryIndex = 0;
 };
 
 } // namespace BiggerBotChess
