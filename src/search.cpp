@@ -140,10 +140,10 @@ Result search(Board& board, int depth, Timemanager& tm){
             r = i_search(board, d, alpha, beta, tm);
 
             if(r.score<=alpha){
-                std::cout << "FAILED LOW at depth "<<d<<" score "<<r.score<<" alpha "<<alpha<<std::endl;
+                //std::cout << "FAILED LOW at depth "<<d<<" score "<<r.score<<" alpha "<<alpha<<std::endl;
                 alpha -=delta*mult;
             }if(r.score>beta){
-                std::cout << "FAILED HIGH at depth "<<d<<" score "<<r.score<<" beta "<<beta<<std::endl;
+                //std::cout << "FAILED HIGH at depth "<<d<<" score "<<r.score<<" beta "<<beta<<std::endl;
 
                 beta += delta*mult;
             }else{
@@ -151,7 +151,7 @@ Result search(Board& board, int depth, Timemanager& tm){
             }
             mult++;
         }while(!end);
-        std::cout << "info depth "<<d<<" score cp "<<r.score<<" pv "<<r.best_move.to_str()<<std::endl;
+        //std::cout << "info depth "<<d<<" score cp "<<r.score<<" pv "<<r.best_move.to_str()<<std::endl;
         if(d == depth){
             return r;
         }
