@@ -14,6 +14,7 @@ private:
     void handle_position(const std::string& command);
     void handle_go(const std::string& command);
     void handle_newgame();
+    void handle_testing();
     Board m_Board;
 };
 

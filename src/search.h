@@ -4,8 +4,10 @@
 #include "board.h"
 #include "eval.h"
 #include "tt.h"
-
 namespace BiggerBotChess {
+
+constexpr int MAX_DEPTH = 256;
+class Timemanager;
 using namespace Eval;
 struct Result{
     Move best_move = Move::null();
@@ -13,6 +15,6 @@ struct Result{
 };
 
 
-Result search(Board& board, int depth);
+Result search(Board& board, int depth, Timemanager& tm);
 
 } // namespace BiggerBotChess

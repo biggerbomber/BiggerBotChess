@@ -1,6 +1,6 @@
 #include "search.h"
 #include "movegenerator.h"
-
+#include "timemanager.h"
 namespace BiggerBotChess {
 
 using namespace Eval;
@@ -62,13 +62,16 @@ Result q_search(Board& board, int alpha, int beta){
     return best_result;
 }
 
-Result i_search(Board& board, int depth, int alpha, int beta){
+Result i_search(Board& board, int depth, int alpha, int beta, Timemanager& tm){
     //Color to_move = board.get_color();
     if(board.is_draw()){
         return {Move::null(), 0};
     }
     if(depth == 0){
         return q_search(board, alpha, beta);
+    }
+    if(tm.time_to_stop()){
+        return {Move::null(), 0};
     }
 
     TTResult tt_result = board.m_tt.probe(board.get_key());
@@ -85,8 +88,8 @@ Result i_search(Board& board, int depth, int alpha, int beta){
             continue;
         }
         one_move_found = true;
-        
-        Result r = i_search(board, depth-1, -beta, -alpha);
+
+        Result r = i_search(board, depth-1, -beta, -alpha, tm);
         r.score = -r.score;
        
         board.undo_move();
@@ -116,8 +119,45 @@ Result i_search(Board& board, int depth, int alpha, int beta){
 }
 
 
-Result search(Board& board, int depth){
-    return i_search(board, depth, -100000, 100000);
-}
+Result search(Board& board, int depth, Timemanager& tm){
+    //Iterative deepening
+    Result old;
 
+    Evaluation bound = Eval::eval(board);
+    int delta = 50; //initial aspiration window size
+
+
+    for(int d = 1; d<=depth;++d){
+        Result r;
+        int alpha = bound - delta;
+        int beta  = bound + delta;
+        bool end = false;
+        int mult = 1;
+        do {
+            if(tm.time_to_stop()){
+                return old;
+            }
+            r = i_search(board, d, alpha, beta, tm);
+
+            if(r.score<=alpha){
+                std::cout << "FAILED LOW at depth "<<d<<" score "<<r.score<<" alpha "<<alpha<<std::endl;
+                alpha -=delta*mult;
+            }if(r.score>beta){
+                std::cout << "FAILED HIGH at depth "<<d<<" score "<<r.score<<" beta "<<beta<<std::endl;
+
+                beta += delta*mult;
+            }else{
+                end = true;
+            }
+            mult++;
+        }while(!end);
+        std::cout << "info depth "<<d<<" score cp "<<r.score<<" pv "<<r.best_move.to_str()<<std::endl;
+        if(d == depth){
+            return r;
+        }
+        old = r;
+    }
+
+    return old;
+}
 } // namespace BiggerBotChess

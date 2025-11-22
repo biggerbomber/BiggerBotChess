@@ -4,6 +4,7 @@
 #include "search.h"
 #include <iostream>
 #include <chrono>
+#include "timemanager.h"
 
 namespace BiggerBotChess { 
 
@@ -315,9 +316,10 @@ void Test::full_challenge(){
             Board& board = boards[turn %2];
             Board& opponent_board = boards[(turn+1)%2];
 
-        
+            Timemanager tm(30000,30000,0,0, board.get_color());
+            tm.start_timer();
 
-            Result result = search(board, 6); //2 seconds per move
+            Result result = search(board, 6, tm); //2 seconds per move
 
             if(result.best_move == Move::null()){
                 std::cout << "Game over on turn " << turn << "\n";

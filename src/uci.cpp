@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include "timemanager.h"
 
 namespace BiggerBotChess {
 
@@ -16,7 +17,7 @@ public:
         //log_file.close();
     }
 
-    void only_file(const std::string& data){
+    void only_file([[maybe_unused]] const std::string&  data){
         //log_file << data;
         //log_file.flush();
     }
@@ -63,7 +64,9 @@ void UCIEngine::main_loop() {
             break;
         } else if(command == "d"){
             log_file << m_Board.get_board_pretty_bb() << "\n";
-        } 
+        } else  if(command == "test"){
+            handle_testing();
+        }
         
     }
 }
@@ -104,23 +107,43 @@ void UCIEngine::handle_position(const std::string& command) {
 }
 
 void UCIEngine::handle_go(const std::string& command) {
-    
     if(command.substr(0, 2) != "go") return;
-    
+    //parameter of go : depth <x>, wtime <x> btime <x> winc <x> binc <x>
+
+    int wtime = 100000, btime = 100000, winc = 0, binc = 0, depth = MAX_DEPTH;
     std::stringstream ss(command);
     std::string token;
-    ss >> token; // skip "go"   
-    ss >> token;
-    if(token == "depth"){
-        int depth;
-        ss >> depth;
-        Result best = search(m_Board, depth);
-        log_file << "info score cp "<<best.score<<" depth "<<depth<< " pv "<<best.best_move.to_str()<<"\n";
-        log_file << "bestmove " << best.best_move.to_str() << "\n";
-        return;
+    ss >> token; // skip "go"
+    while(ss >> token) {
+        if(token == "wtime") {
+            ss >> wtime;
+        } else if(token == "btime") {
+            ss >> btime;
+        } else if(token == "winc") {
+            ss >> winc;
+        } else if(token == "binc") {
+            ss >> binc;
+        }
     }
-    Result best = search(m_Board, 6); //search to depth 6
-    log_file << "info score cp "<<best.score<<" depth 6 pv "<<best.best_move.to_str()<<"\n";
-    log_file << "bestmove " << best.best_move.to_str() << "\n";
+    Timemanager tm(wtime, btime, winc, binc, m_Board.get_color());
+    tm.start_timer();
+
+    Result result = search(m_Board, depth, tm);
+    log_file << "bestmove " << result.best_move.to_str() << "\n";
+
 }
+
+void UCIEngine::handle_testing(){
+    std::string line;
+    while (std::getline(std::cin, line)) {
+        if(line == "quit"){
+            break;
+        }
+        Board board(line);
+        Features feats = Eval::get_features(board);
+        //log_file << "Features for position: " << line << "\n";
+        log_file << features_to_str_compact(feats) << "\n";
+    }
+}
+
 } // namespace BiggerBotChess
