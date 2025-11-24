@@ -32,7 +32,7 @@ struct TTEntry {
 class TT
 {
 public:
-    static constexpr size_t TABLE_SIZE = 1 << 26;
+    static constexpr size_t TABLE_SIZE = 1 << 22;
     void init();
     void clear();
 
