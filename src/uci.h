@@ -11,6 +11,7 @@ public:
 
 private:
 
+    bool is_first_move() const;
     void handle_position(const std::string& command);
     void handle_go(const std::string& command);
     void handle_newgame();

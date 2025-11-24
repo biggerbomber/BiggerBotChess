@@ -36,6 +36,10 @@ MyOut log_file = MyOut();
 UCIEngine::UCIEngine() : m_Board() {
 }
 
+bool  UCIEngine::is_first_move() const {
+    return m_Board.m_StateHistory.size() < 3; 
+}
+
 void UCIEngine::main_loop() {
     std::string command;
     // For debugging purposes, log all commands to a file
@@ -125,6 +129,14 @@ void UCIEngine::handle_go(const std::string& command) {
             ss >> binc;
         }
     }
+
+    if(is_first_move()){
+        wtime = std::min(wtime,50000);
+        winc  = std::min(winc,1000);
+        btime = std::min(btime,50000);
+        binc  = std::min(binc,1000);
+    }
+
     Timemanager tm(wtime, btime, winc, binc, m_Board.get_color());
     tm.start_timer();
 
