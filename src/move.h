@@ -50,6 +50,9 @@ public:
     };
 
     inline std::string to_str() const{
+        if(*this == Move::null()){
+            return "null";
+        }
         std::string move_str = square_to_str(get_start()) + square_to_str(get_dest());
         if(get_type() == PROMOTION){
             switch (get_promotion_piece())
@@ -64,7 +67,7 @@ public:
         return move_str;
     };
 
-    inline bool operator==(const Move& other){
+    inline bool operator==(const Move& other) const{
         return m_data == other.m_data;
     };
    

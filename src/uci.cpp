@@ -127,6 +127,8 @@ void UCIEngine::handle_go(const std::string& command) {
             ss >> winc;
         } else if(token == "binc") {
             ss >> binc;
+        }else if(token == "depth"){
+            ss >> depth;
         }
     }
 
@@ -135,6 +137,11 @@ void UCIEngine::handle_go(const std::string& command) {
         winc  = std::min(winc,1000);
         btime = std::min(btime,50000);
         binc  = std::min(binc,1000);
+    }
+
+    if(depth != MAX_DEPTH){
+        wtime = 1000000000; 
+        btime = 1000000000; 
     }
 
     Timemanager tm(wtime, btime, winc, binc, m_Board.get_color());

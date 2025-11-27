@@ -6,7 +6,7 @@
 #include "tt.h"
 namespace BiggerBotChess {
 
-constexpr int MAX_DEPTH = 256;
+constexpr int MAX_DEPTH = 64;
 class Timemanager;
 using namespace Eval;
 struct Result{

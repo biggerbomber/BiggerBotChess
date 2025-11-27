@@ -1,9 +1,19 @@
 #include "search.h"
+#include "move.h"
 #include "movegenerator.h"
 #include "timemanager.h"
+#include <cassert>
+#include <cstring>
+#include <string>
 namespace BiggerBotChess {
 
 using namespace Eval;
+
+Move pvTable[MAX_DEPTH][MAX_DEPTH];
+int currentDepth;
+
+
+
 
 Result q_search(Board& board, int alpha, int beta){
     //Color to_move = board.get_color();
@@ -99,6 +109,13 @@ Result i_search(Board& board, int depth, int alpha, int beta, Timemanager& tm){
         if(r.score > best_result.score || best_result.best_move == Move::null()){
             best_result.best_move = m;
             best_result.score = r.score;
+
+            //copiare la pv table inferiore su
+
+            pvTable[currentDepth-depth][currentDepth-depth] = m;
+            for(int i = currentDepth-depth+1; i <currentDepth; i++){
+                pvTable[currentDepth-depth][i] = pvTable[currentDepth-depth+1][i];
+            }
         }
         alpha = std::max(alpha, r.score);
         if(alpha >= beta){
@@ -118,8 +135,22 @@ Result i_search(Board& board, int depth, int alpha, int beta, Timemanager& tm){
 
 }
 
+std::string print_pvTable(unsigned int depth){
+    assert(depth <= MAX_DEPTH);
+    std::string out;
+    for(unsigned int i = 0; i<depth;i++){
+        for(unsigned int j = 0; j<depth;j++){
+            out += pvTable[i][j].to_str() + " ";
+        }
+        out += "\n";
+    }
+    return out;
+}
+
 
 Result search(Board& board, int depth, Timemanager& tm){
+
+    memset(pvTable,0,sizeof(pvTable));
     //Iterative deepening
     Result old;
 
@@ -128,6 +159,7 @@ Result search(Board& board, int depth, Timemanager& tm){
 
 
     for(int d = 1; d<=depth;++d){
+        currentDepth = d;
         Result r;
         int alpha = bound - delta;
         int beta  = bound + delta;
@@ -151,7 +183,12 @@ Result search(Board& board, int depth, Timemanager& tm){
             }
             mult++;
         }while(!end);
-        //std::cout << "info depth "<<d<<" score cp "<<r.score<<" pv "<<r.best_move.to_str()<<std::endl;
+        std::string pv_string ="";
+        for(int i=0; i<d;i++){
+            pv_string += pvTable[0][i].to_str()+" ";
+        }
+        std::cout << "info depth "<<d<<" score cp "<<r.score<<" pv "<<pv_string<<std::endl;
+        //std::cout << print_pvTable(d*3) <<std::endl;
         if(d == depth){
             return r;
         }
